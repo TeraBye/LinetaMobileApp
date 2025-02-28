@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Lineta" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Làm trong suốt Status Bar -->
+        <item name="colorControlNormal">#FF9800</item>
+
+        <item name="android:statusBarColor">@color/white</item>
+    </style>
+
+    <style name="Theme.Lineta" parent="Base.Theme.Lineta" />
+</resources>
