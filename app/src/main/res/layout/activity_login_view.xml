@@ -40,7 +40,7 @@
                 android:textStyle="bold" />
 
             <EditText
-                android:id="@+id/etxtUsername"
+                android:id="@+id/edtEmail"
                 android:layout_width="match_parent"
                 android:layout_height="43dp"
                 android:layout_marginTop="20dp"
@@ -48,14 +48,14 @@
                 android:drawablePadding="8dp"
                 android:ems="10"
                 android:drawableLeft="@drawable/baseline_person_24"
-                android:hint="Username"
+                android:hint="Email"
                 android:padding="10dp"
 
                 android:textColorHighlight="@color/cardview_dark_background"
                  />
 
             <EditText
-                android:id="@+id/etxtPassword"
+                android:id="@+id/edtPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"

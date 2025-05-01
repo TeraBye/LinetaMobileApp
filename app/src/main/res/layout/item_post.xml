@@ -1,4 +1,5 @@
-<androidx.cardview.widget.CardView android:layout_width="match_parent"
+<androidx.cardview.widget.CardView
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -21,7 +22,7 @@
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/avatar"
-                android:layout_width="35sp"
+                android:layout_width="35dp"
                 android:layout_height="36dp"
                 android:layout_gravity="bottom"
                 android:layout_marginTop="-40dp"
@@ -56,44 +57,74 @@
             android:text="Hello everyone, I'm frofessor from Money Heist. Nice to meet you!"
             android:fontFamily="@font/shrikhand"/>
 
-        <RelativeLayout
+        <!-- Phần hiển thị media (Ảnh hoặc Video) -->
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="340dp">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
 
             <!-- Ảnh bài viết -->
             <ImageView
                 android:id="@+id/imgPost"
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_gravity="center"
                 android:scaleType="centerCrop"
-                android:src="@drawable/post_founded" />
+                android:visibility="gone"
+                app:layout_constraintDimensionRatio="H,16:9"
+                app:layout_constraintWidth_percent="1"
+                tools:ignore="MissingConstraints" />
+
+            <!-- Video bài viết -->
+            <VideoView
+                android:id="@+id/videoPost"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                app:layout_constraintDimensionRatio="H,16:9"
+                app:layout_constraintWidth_percent="1"
+                tools:ignore="MissingConstraints" />
+
+            <!-- Nút Play -->
+            <ImageView
+                android:id="@+id/btnPlay"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:src="@drawable/baseline_play_circle_24"
+                android:visibility="gone"
+                android:contentDescription="Play Button"
+                app:layout_constraintBottom_toBottomOf="@id/videoPost"
+                app:layout_constraintTop_toTopOf="@id/videoPost"
+                app:layout_constraintLeft_toLeftOf="@id/videoPost"
+                app:layout_constraintRight_toRightOf="@id/videoPost"
+                tools:ignore="MissingConstraints" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Các nút Tim, Like, Comment -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|bottom"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="10dp">
 
             <ImageView
                 android:id="@+id/btnLove"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentBottom="true"
-                android:layout_margin="10dp"
                 android:background="@drawable/bg_circle"
                 android:padding="10dp"
                 android:src="@drawable/red_heart_svgrepo_com" />
-
-            <!-- Nút Tim -->
-
-            <!-- Nút Comment -->
 
             <ImageView
                 android:id="@+id/btnLike"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
-                android:layout_alignParentBottom="true"
-                android:layout_margin="10dp"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="20dp"
-                android:layout_marginBottom="18dp"
-                android:layout_toEndOf="@+id/btnLove"
                 android:background="@drawable/bg_circle"
                 android:padding="10dp"
                 android:src="@drawable/like_1_svgrepo_com" />
@@ -102,17 +133,10 @@
                 android:id="@+id/btnComment"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
-                android:layout_alignParentBottom="true"
-                android:layout_marginStart="23dp"
-                android:layout_marginTop="20dp"
-                android:layout_margin="10dp"
-                android:layout_marginBottom="19dp"
-                android:layout_toEndOf="@+id/btnLike"
+                android:layout_marginStart="10dp"
                 android:background="@drawable/bg_circle"
                 android:padding="10dp"
                 android:src="@drawable/comment_dots_svgrepo_com" />
-        </RelativeLayout>
-
-
+        </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
