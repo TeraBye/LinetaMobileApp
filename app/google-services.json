@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "589813021873",
+    "project_id": "social-media-1c233",
+    "storage_bucket": "social-media-1c233.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:589813021873:android:3ced865ec7564b042bf690",
+        "android_client_info": {
+          "package_name": "com.example.lineta"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "589813021873-l0sp89d4gg27k794l36a423e5duuujos.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBouAvv1jn9xfkviJxyjHYLdDVEn3SLNrM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "589813021873-l0sp89d4gg27k794l36a423e5duuujos.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
