@@ -15,17 +15,19 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.lineta.Entity.Post;
 import com.example.lineta.R;
+import com.example.lineta.Home.interaction.CommentBottomSheetFragment; // Thêm import dialog nếu chưa có
 
 import java.util.List;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     private List<Post> posts;
-    private Context context;  // Thêm Context vào adapter
+    private Context context;
 
-    public PostAdapter(List<Post> posts) {
-        this.context = context;  // Nhận context từ Activity
+    public PostAdapter(Context context, List<Post> posts) {
+        this.context = context;
         this.posts = posts;
     }
+
 
     @NonNull
     @Override
@@ -41,59 +43,59 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.tvUsername.setText(post.getFullName());
         holder.tvCaption.setText(post.getContent());
 
-        // Ẩn ảnh và video trước
         holder.imgPost.setVisibility(View.GONE);
         holder.videoPost.setVisibility(View.GONE);
         holder.btnPlay.setVisibility(View.GONE);
-        holder.avatar.setVisibility(View.GONE);// Ẩn nút play
+        holder.avatar.setVisibility(View.GONE);
 
         if (post.getProfilePicURL() != null && !post.getProfilePicURL().isEmpty()) {
             holder.avatar.setVisibility(View.VISIBLE);
             Glide.with(holder.itemView.getContext())
                     .load(post.getProfilePicURL())
-                    .placeholder(R.drawable.main_logo) // Thay bằng hình placeholder khi chưa có ảnh
+                    .placeholder(R.drawable.main_logo)
                     .into(holder.avatar);
         }
 
-        // Nếu có ảnh
-        if (post.getPicture() != null && !post.getPicture().isEmpty()) {
+        if (post.getPicture() != null && !post.getPicture().isEmpty() && !post.getPicture().equalsIgnoreCase("null")) {
             holder.imgPost.setVisibility(View.VISIBLE);
             Glide.with(holder.itemView.getContext())
                     .load(post.getPicture())
-                    .placeholder(R.drawable.main_logo) // Thay bằng hình placeholder khi chưa có ảnh
+                    .placeholder(R.drawable.main_logo)
                     .into(holder.imgPost);
         }
 
-        // Nếu có video
-        if (post.getVideo() != null && !post.getVideo().isEmpty()) {
+        String video = post.getVideo();
+        if (video != null && !video.trim().isEmpty() && !video.equalsIgnoreCase("null")) {
             holder.videoPost.setVisibility(View.VISIBLE);
-            holder.videoPost.setVideoPath(post.getVideo());
-            holder.videoPost.seekTo(1); // Để video hiển thị thumbnail và không chạy
-
-            // Hiển thị nút Play
+            holder.videoPost.setVideoPath(video);
+            holder.videoPost.seekTo(1);
             holder.btnPlay.setVisibility(View.VISIBLE);
 
-            // Khi nhấn vào nút Play, video sẽ phát
             holder.btnPlay.setOnClickListener(v -> {
-                // Lập tức ẩn nút play và bắt đầu phát video
                 holder.btnPlay.setVisibility(View.GONE);
                 holder.videoPost.start();
             });
+
             holder.videoPost.setOnClickListener(v -> {
                 if (holder.videoPost.isPlaying()) {
-                    // Nếu video đang phát, dừng video
                     holder.videoPost.pause();
                 } else {
-                    // Nếu video không phát, bắt đầu phát video
                     holder.videoPost.start();
                 }
             });
-
-
-
+        } else {
+            holder.videoPost.setVisibility(View.GONE);
+            holder.btnPlay.setVisibility(View.GONE);
+            holder.videoPost.setVideoPath("");
         }
-    }
+        holder.btnComment.setOnClickListener(v -> {
+            if (context instanceof FragmentActivity) {
+                CommentBottomSheetFragment fragment = CommentBottomSheetFragment.newInstance(post.getPostId());
+                fragment.show(((FragmentActivity) context).getSupportFragmentManager(), "CommentBottomSheet");
+            }
+        });
 
+    }
 
     @Override
     public int getItemCount() {
@@ -102,7 +104,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvUsername, tvCaption;
-        ImageView imgPost, btnPlay, avatar;  // Thêm btnPlay vào
+        ImageView imgPost, btnPlay, avatar, btnComment;
         VideoView videoPost;
 
         public ViewHolder(@NonNull View itemView) {
@@ -112,8 +114,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             tvCaption = itemView.findViewById(R.id.tvCaption);
             imgPost = itemView.findViewById(R.id.imgPost);
             videoPost = itemView.findViewById(R.id.videoPost);
-            btnPlay = itemView.findViewById(R.id.btnPlay);  // Khởi tạo btnPlay
+            btnPlay = itemView.findViewById(R.id.btnPlay);
+            btnComment = itemView.findViewById(R.id.btnComment); // Thêm ánh xạ nút comment
         }
     }
 }
-

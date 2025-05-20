@@ -22,8 +22,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.lineta.Home.modalPost.CreatePostBottomSheet;
 import com.example.lineta.R;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
 public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
@@ -70,6 +72,12 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
 
 
         binding.bottomNavigationView.setBackground(null);
+
+        FloatingActionButton fab = findViewById(R.id.fabu); // chắc chắn trong layout của bạn có fab này
+        fab.setOnClickListener(v -> {
+            CreatePostBottomSheet bottomSheet = CreatePostBottomSheet.newInstance();
+            bottomSheet.show(getSupportFragmentManager(), "CreatePostBottomSheet");
+        });
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;

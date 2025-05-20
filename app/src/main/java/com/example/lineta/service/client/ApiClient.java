@@ -1,46 +1,26 @@
 package com.example.lineta.service.client;
 
-import android.text.TextUtils;
-
-import java.io.IOException;
-
-import okhttp3.Interceptor;
+import com.example.lineta.intercepter.AuthInterceptor;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
-    private static final String BASE_URL = "http://localhost:9000/"; // 👉 Thay server bạn vào
-    private static Retrofit retrofit;
-    private static String token = "";
-
-    public static void setToken(String tokenValue) {
-        token = tokenValue;
-    }
+    private static Retrofit retrofit = null;
 
     public static Retrofit getRetrofit() {
         if (retrofit == null) {
-            OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-            clientBuilder.addInterceptor(chain -> {
-                Request originalRequest = chain.request();
-                Request.Builder builder = originalRequest.newBuilder();
-
-                if (!TextUtils.isEmpty(token)) {
-                    builder.header("Authorization", "Bearer " + token);
-                }
-
-                Request newRequest = builder.build();
-                return chain.proceed(newRequest);
-            });
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .addInterceptor(new AuthInterceptor()) // Thêm Interceptor
+                    .build();
 
             retrofit = new Retrofit.Builder()
-                    .baseUrl(BASE_URL)
-                    .client(clientBuilder.build())
+                    .baseUrl("http://localhost:9191/") // thay bằng base URL thật
+                    .client(client)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
         return retrofit;
     }
 }
+

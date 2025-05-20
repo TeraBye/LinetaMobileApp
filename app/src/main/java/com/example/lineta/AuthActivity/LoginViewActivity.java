@@ -75,7 +75,7 @@ public class LoginViewActivity extends AppCompatActivity {
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
-                .url("http://localhost:8080/auth/login")
+                .url("http://localhost:8080/api/auth/login")
                 .addHeader("Authorization", "Bearer " + idToken)
                 .post(okhttp3.RequestBody.create(null, new byte[0])) // POST rỗng
                 .build();
