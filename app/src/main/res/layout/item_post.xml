@@ -118,7 +118,7 @@
                 android:layout_height="45dp"
                 android:background="@drawable/bg_circle"
                 android:padding="10dp"
-                android:src="@drawable/red_heart_svgrepo_com" />
+                android:src="@drawable/ic_heart_outline" />
 
             <ImageView
                 android:id="@+id/btnLike"
@@ -127,7 +127,7 @@
                 android:layout_marginStart="10dp"
                 android:background="@drawable/bg_circle"
                 android:padding="10dp"
-                android:src="@drawable/like_1_svgrepo_com" />
+                android:src="@drawable/ic_thumb_up_outline" />
 
             <ImageView
                 android:id="@+id/btnComment"

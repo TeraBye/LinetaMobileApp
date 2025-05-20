@@ -1,11 +1,16 @@
 package com.example.lineta.Entity;
 
 public class Post {
+    private String postId;
     private String fullName;  // Tên tác giả
     private String content;   // Nội dung bài viết
     private String picture;   // URL ảnh (có thể là null)
     private String video;
     private String profilePicURL;// URL video (có thể là null)
+
+    public Post(){
+
+    }
 
     public Post(String fullName, String content, String picture, String video, String profilePicURL) {
         this.fullName = fullName;
@@ -16,6 +21,13 @@ public class Post {
     }
 
     // Getter và Setter
+    public String getPostId() {
+        return postId;
+    }
+
+    public void setPostId(String postId) {
+        this.postId = postId;
+    }
     public String getFullName() {
         return fullName;
     }
