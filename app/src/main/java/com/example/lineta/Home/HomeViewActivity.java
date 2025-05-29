@@ -1,6 +1,7 @@
 package com.example.lineta.Home;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -10,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -22,14 +24,17 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.lineta.AuthActivity.LoginActivity;
 import com.example.lineta.Home.modalPost.CreatePostBottomSheet;
 import com.example.lineta.R;
+import com.example.lineta.Search.SearchActivity;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
-
+    FirebaseAuth mAuth;
     ActivityHomeViewBinding binding;
     DrawerLayout drawerLayout;
 
@@ -40,6 +45,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         binding = ActivityHomeViewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         EdgeToEdge.enable(this); // Bắt buộc cho version Android mới
+
+        mAuth = FirebaseAuth.getInstance();
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
             Window window = this.getWindow();
@@ -110,11 +117,27 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.drawer_account) {
             replaceFragment(new AccountFragment());
+        } else if (item.getItemId() == R.id.drawer_search) {
+            Intent intent = new Intent(this, SearchActivity.class);
+            startActivity(intent);
         } else if (item.getItemId() == R.id.drawer_settings) {
             replaceFragment(new SettingsFragment());
+        } else if (item.getItemId() == R.id.drawer_logout) {
+            logout();
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private void logout() {
+        mAuth.signOut();
+
+        Intent intent = new Intent(HomeViewActivity.this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+    }
+
 }
