@@ -22,7 +22,7 @@ public class AuthInterceptor implements Interceptor {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
             try {
-                Task<GetTokenResult> task = user.getIdToken(false);
+                Task<GetTokenResult> task = user.getIdToken(true); // Tham số true buộc Firebase làm mới token mới nhất từ server,
                 Tasks.await(task); // blocking call để chờ token
 
                 String token = task.getResult().getToken();

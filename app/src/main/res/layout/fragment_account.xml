@@ -34,7 +34,7 @@
             android:padding="10dp">
 
             <TextView
-                android:id="@+id/tvProfileName"
+                android:id="@+id/tvUsername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="70dp"
@@ -46,7 +46,7 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tvProfileNickname"
+                android:id="@+id/tvFullName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/lobster"
@@ -68,7 +68,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tvPosts"
+                        android:id="@+id/tvPostNum"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/darumadrop_one"
@@ -94,7 +94,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tvFollowers"
+                        android:id="@+id/tvFollowerNum"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/darumadrop_one"
@@ -120,7 +120,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tvFollowing"
+                        android:id="@+id/tvFollowingNum"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/darumadrop_one"
