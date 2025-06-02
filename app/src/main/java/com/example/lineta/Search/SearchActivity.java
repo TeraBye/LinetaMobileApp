@@ -1,14 +1,14 @@
 package com.example.lineta.Search;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -17,11 +17,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lineta.Adapter.UserSearchAdapter;
+import com.example.lineta.Home.AccountFragment;
+import com.example.lineta.Home.HomeViewActivity;
 import com.example.lineta.R;
 import com.example.lineta.dto.response.ApiResponse;
 import com.example.lineta.dto.response.UserSearchResponse;
-import com.example.lineta.service.ApiService;
-import com.example.lineta.service.SearchApi;
+import com.example.lineta.service.SearchService;
 import com.example.lineta.service.client.ApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -39,6 +40,7 @@ public class SearchActivity extends AppCompatActivity {
     TextView cancelButton;
     UserSearchAdapter adapter;
     TextView clearHistoryButton;
+    LinearLayout recentSearchLayout;
     String searcherId = FirebaseAuth.getInstance().getUid();
 
     @Override
@@ -52,36 +54,36 @@ public class SearchActivity extends AppCompatActivity {
         noResultsText = findViewById(R.id.no_results_text);
         cancelButton = findViewById(R.id.cancel_button);
         clearHistoryButton = findViewById(R.id.clear_history_button);
+        recentSearchLayout = findViewById(R.id.recent_searches_header);
 
         // Cài đặt RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new UserSearchAdapter(null, this, searcherId);
         recyclerView.setAdapter(adapter);
 
-        // Thiết lập listener cho lịch sử tìm kiếm
-        adapter.setOnHistoryItemClickListener(query -> {
-            searchEditText.setText(query);
-            callSearchApi(query, adapter, noResultsText);
+        // Thiết lập item click
+        adapter.setOnItemClickListener(userId -> {
+            Intent intent = new Intent(SearchActivity.this, HomeViewActivity.class);
+            intent.putExtra("selected_user_id", userId);
+            intent.putExtra("navigate_to_profile", true);
+            startActivity(intent);
+            finish();
         });
-        
+
+        // Thiết lập listener cho lịch sử tìm kiếm
+        // Handle history item clicks
+        adapter.setOnHistoryItemClickListener(userId -> {
+            Intent intent = new Intent(SearchActivity.this, HomeViewActivity.class);
+            intent.putExtra("selected_user_id", userId);
+            intent.putExtra("navigate_to_profile", true);
+            startActivity(intent);
+            finish();
+        });
+
         // Hiển thị lịch sử tìm kiếm ban đầu
         showSearchHistory();
 
         final Handler handler = new Handler(Looper.getMainLooper());
-        final Runnable searchRunnable = new Runnable() {
-            @Override
-            public void run() {
-                String query = searchEditText.getText().toString().trim();
-                if (!query.isEmpty()) {
-                    callSearchApi(query, adapter, noResultsText);
-                } else {
-                    adapter.setUserSearchResponses(new ArrayList<>());
-                    adapter.notifyDataSetChanged();
-                    recyclerView.setVisibility(View.GONE);
-                    noResultsText.setVisibility(View.VISIBLE);
-                }
-            }
-        };
         // Xử lý sự kiện Search
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -96,10 +98,16 @@ public class SearchActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                // Hủy các runnable trước đó để tránh gọi API quá nhiều
-                handler.removeCallbacks(searchRunnable);
-                // Trì hoãn 500ms trước khi gọi API
-                handler.postDelayed(searchRunnable, 0);
+                handler.removeCallbacksAndMessages(null);
+                handler.postDelayed(() -> {
+                    String query = searchEditText.getText().toString().trim();
+                    if (!query.isEmpty()) {
+                        callSearchApi(query, adapter, noResultsText);
+                    } else {
+                        recentSearchLayout.setVisibility(View.VISIBLE);
+                        showSearchHistory();
+                    }
+                }, 0);
             }
         });
 
@@ -111,8 +119,8 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void deleteAllSearchHistory() {
-        SearchApi searchApi = ApiClient.getRetrofit().create(SearchApi.class);
-        Call<ApiResponse<Void>> call = searchApi.deleteAllSearchHistory(searcherId);
+        SearchService searchService = ApiClient.getRetrofit().create(SearchService.class);
+        Call<ApiResponse<Void>> call = searchService.deleteAllSearchHistory(searcherId);
         call.enqueue(new Callback<ApiResponse<Void>>() {
             @Override
             public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
@@ -129,31 +137,33 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void showSearchHistory() {
-        SearchApi searchApi = ApiClient.getRetrofit().create(SearchApi.class);
-        Call<ApiResponse<List<UserSearchResponse>>> call = searchApi.getSearchHistory(searcherId);
+        SearchService searchService = ApiClient.getRetrofit().create(SearchService.class);
+        Call<ApiResponse<List<UserSearchResponse>>> call = searchService.getSearchHistory(searcherId);
         call.enqueue(new Callback<ApiResponse<List<UserSearchResponse>>>() {
             @Override
             public void onResponse(Call<ApiResponse<List<UserSearchResponse>>> call, Response<ApiResponse<List<UserSearchResponse>>> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getCode() == 1000) {
                     List<UserSearchResponse> history = response.body().getResult();
+                    adapter.setUserSearchResponses(new ArrayList<>());
                     if (history == null || history.isEmpty()) {
-                        adapter.setUserSearchResponses(new ArrayList<>());
-                        adapter.notifyDataSetChanged();
                         recyclerView.setVisibility(View.GONE);
                         noResultsText.setText("No recent searches");
                         noResultsText.setVisibility(View.VISIBLE);
                         clearHistoryButton.setVisibility(View.GONE);
+                        recentSearchLayout.setVisibility(View.GONE);
                     } else {
                         adapter.setSearchHistory(history);
                         recyclerView.setVisibility(View.VISIBLE);
                         noResultsText.setVisibility(View.GONE);
                         clearHistoryButton.setVisibility(View.VISIBLE);
+                        recentSearchLayout.setVisibility(View.VISIBLE);
                     }
                 } else {
                     recyclerView.setVisibility(View.GONE);
                     noResultsText.setText("No recent searches");
                     noResultsText.setVisibility(View.VISIBLE);
                     clearHistoryButton.setVisibility(View.GONE);
+                    recentSearchLayout.setVisibility(View.GONE);
                 }
             }
 
@@ -163,13 +173,14 @@ public class SearchActivity extends AppCompatActivity {
                 noResultsText.setText("No recent searches");
                 noResultsText.setVisibility(View.VISIBLE);
                 clearHistoryButton.setVisibility(View.GONE);
+                recentSearchLayout.setVisibility(View.GONE);
             }
         });
     }
 
     private void callSearchApi(String query, UserSearchAdapter adapter, TextView noResultsText) {
-        SearchApi searchApi = ApiClient.getRetrofit().create(SearchApi.class);
-        Call<ApiResponse<List<UserSearchResponse>>> call = searchApi.getSearch(query);
+        SearchService searchService = ApiClient.getRetrofit().create(SearchService.class);
+        Call<ApiResponse<List<UserSearchResponse>>> call = searchService.getSearch(query);
 
         call.enqueue(new Callback<ApiResponse<List<UserSearchResponse>>>() {
             @Override
@@ -178,16 +189,16 @@ public class SearchActivity extends AppCompatActivity {
                     List<UserSearchResponse> searchResponses = response.body().getResult();
                     adapter.setUserSearchResponses(searchResponses);
                     adapter.setContext(SearchActivity.this);
-                    adapter.notifyDataSetChanged();
                     if (searchResponses != null && !searchResponses.isEmpty()) {
                         recyclerView.setVisibility(View.VISIBLE);
                         noResultsText.setVisibility(View.GONE);
+                        recentSearchLayout.setVisibility(View.GONE);
                     } else {
                         recyclerView.setVisibility(View.GONE);
                         noResultsText.setVisibility(View.VISIBLE);
+                        recentSearchLayout.setVisibility(View.VISIBLE);
                     }
-                }
-                else {
+                } else {
                     recyclerView.setVisibility(View.GONE);
                     noResultsText.setVisibility(View.VISIBLE);
                 }

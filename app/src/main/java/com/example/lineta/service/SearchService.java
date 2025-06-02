@@ -12,7 +12,7 @@ import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
-public interface SearchApi {
+public interface SearchService {
     @GET("api/auth/search/")
     Call<ApiResponse<List<UserSearchResponse>>> getSearch(
             @Query("q") String query
@@ -36,6 +36,6 @@ public interface SearchApi {
     );
 
     // API xóa toàn bộ lịch sử tìm kiếm
-    @DELETE("delete-all-search-history")
+    @DELETE("api/auth/search/delete-all-search-history")
     Call<ApiResponse<Void>> deleteAllSearchHistory(@Query("searcherId") String searcherId);
 }

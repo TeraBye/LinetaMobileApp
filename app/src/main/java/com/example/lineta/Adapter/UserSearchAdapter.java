@@ -14,7 +14,7 @@ import com.bumptech.glide.Glide;
 import com.example.lineta.R;
 import com.example.lineta.dto.response.ApiResponse;
 import com.example.lineta.dto.response.UserSearchResponse;
-import com.example.lineta.service.SearchApi;
+import com.example.lineta.service.SearchService;
 import com.example.lineta.service.client.ApiClient;
 import com.google.android.material.imageview.ShapeableImageView;
 
@@ -33,10 +33,14 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Vi
     List<UserSearchResponse> searchHistory;
     Context context;
     boolean isHistoryMode = false;
+    OnHistoryItemClickListener historyItemClickListener;
+    OnItemClickListener itemClickListener;
     public interface OnHistoryItemClickListener {
         void onHistoryItemClick(String query);
     }
-    OnHistoryItemClickListener historyItemClickListener;
+    public interface OnItemClickListener {
+        void onItemClick(String userId);
+    }
     String searcherId;
 
     public UserSearchAdapter(List<UserSearchResponse> userSearchResponses, Context context, String searcherId) {
@@ -49,6 +53,9 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Vi
     public UserSearchAdapter() {
     }
 
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.itemClickListener = listener;
+    }
     public void setOnHistoryItemClickListener(OnHistoryItemClickListener listener) {
         this.historyItemClickListener = listener;
     }
@@ -117,12 +124,16 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Vi
             holder.itemView.setOnClickListener(v -> {
                 addSearchHistory(userSearchResponse.getUid());
             });
+
+            if (itemClickListener != null) {
+                itemClickListener.onItemClick(userSearchResponse.getUid());
+            }
         }
     }
 
     private void addSearchHistory(String targetUserId) {
-        SearchApi searchApi = ApiClient.getRetrofit().create(SearchApi.class);
-        Call<ApiResponse<Void>> call = searchApi.addSearchHistory(searcherId, targetUserId);
+        SearchService searchService = ApiClient.getRetrofit().create(SearchService.class);
+        Call<ApiResponse<Void>> call = searchService.addSearchHistory(searcherId, targetUserId);
         call.enqueue(new Callback<ApiResponse<Void>>() {
             @Override
             public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
@@ -137,8 +148,8 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Vi
     }
 
     private void deleteHistoryItem(String targetUserId, int position) {
-        SearchApi searchApi = ApiClient.getRetrofit().create(SearchApi.class);
-        Call<ApiResponse<Void>> call = searchApi.deleteSearchHistory(searcherId, targetUserId);
+        SearchService searchService = ApiClient.getRetrofit().create(SearchService.class);
+        Call<ApiResponse<Void>> call = searchService.deleteSearchHistory(searcherId, targetUserId);
         call.enqueue(new Callback<ApiResponse<Void>>() {
             @Override
             public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {

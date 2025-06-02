@@ -6,17 +6,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="16dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
     android:gravity="center_vertical"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
-    android:focusable="true"
-    tools:ignore="NamespaceTypo">
+    android:focusable="true">
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/profilePic"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:scaleType="centerCrop"
         android:src="@drawable/default_avatar"
         app:shapeAppearanceOverlay="@style/CircleImageView" />
@@ -25,7 +27,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
         android:orientation="vertical">
 
         <TextView
@@ -35,7 +38,9 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/black"
-            tools:text="foodkinggoodsg" />
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="terabye" />
 
         <TextView
             android:id="@+id/tvFullName"
@@ -44,29 +49,23 @@
             android:textSize="14sp"
             android:textColor="@color/gray_dark"
             android:layout_marginTop="2dp"
-            tools:text="foodkinggood • Followed by kh..." />
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Luân Giáo Sư" />
 
     </LinearLayout>
 
-    <!-- Delete Button with modern design -->
-    <FrameLayout
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginStart="8dp"
-        android:background="@drawable/delete_button_background"
+    <!-- Delete Button -->
+    <ImageView
+        android:id="@+id/deleteButton"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_close_small"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"
-        android:contentDescription="Remove from recent searches">
-
-        <ImageView
-            android:id="@+id/deleteButton"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_close_small"
-            app:tint="@color/gray_dark" />
-
-    </FrameLayout>
+        android:contentDescription="Remove from recent searches"
+        android:padding="4dp" />
 
 </LinearLayout>

@@ -75,34 +75,6 @@
 
     </LinearLayout>
 
-    <!-- Clear History Section -->
-    <LinearLayout
-        android:id="@+id/clear_history_section"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="8dp"
-        android:gravity="end"
-        android:visibility="gone">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/clear_history_button"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="Clear All"
-            android:textSize="14sp"
-            android:textColor="@color/blue_accent"
-            android:textAllCaps="false"
-            android:backgroundTint="@android:color/transparent"
-            app:rippleColor="@color/blue_light"
-            android:minWidth="0dp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
-
-    </LinearLayout>
-
     <!-- Recent Searches Header -->
     <LinearLayout
         android:id="@+id/recent_searches_header"
@@ -112,9 +84,9 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingBottom="16dp"
         android:gravity="center_vertical"
-        android:visibility="gone">
+        >
 
         <TextView
             android:layout_width="0dp"
@@ -124,6 +96,18 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/clear_history_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear all"
+            android:textSize="16sp"
+            android:textColor="@color/blue_accent"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true" />
 
     </LinearLayout>
 
