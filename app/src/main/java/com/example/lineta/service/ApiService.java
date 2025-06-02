@@ -3,11 +3,14 @@ package com.example.lineta.service;
 import com.example.lineta.Entity.Comment;
 import com.example.lineta.Entity.Post;
 import com.example.lineta.dto.response.ApiResponse;
+import com.example.lineta.dto.response.UserSearchResponse;
 
 import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 public interface ApiService {
@@ -22,4 +25,5 @@ public interface ApiService {
     Call<ApiResponse<List<Comment>>> getComments(
             @Query("postId") String postId
     );
+
 }
