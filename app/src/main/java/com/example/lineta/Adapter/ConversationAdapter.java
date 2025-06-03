@@ -15,15 +15,21 @@ import java.util.List;
 public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.ConversationViewHolder> {
 
     private List<Conversation> conversations;
+    private String userId;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick(Conversation conversation);
+        void onItemClick(String userId, Conversation conversation);
     }
 
     public ConversationAdapter(List<Conversation> conversations, OnItemClickListener listener) {
         this.conversations = conversations;
         this.listener = listener;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+        notifyDataSetChanged();
     }
 
     public static class ConversationViewHolder extends RecyclerView.ViewHolder {
@@ -53,16 +59,19 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     @Override
     public void onBindViewHolder(ConversationViewHolder holder, int position) {
         Conversation conversation = conversations.get(position);
-        holder.name.setText(conversation.getName());
+        holder.name.setText(conversation.getName(userId)); // Hiển thị tên người dùng khác
         holder.lastMessage.setText(conversation.getLastMessage());
-        holder.time.setText(conversation.getTime());
-        if (conversation.getUnreadCount() > 0) {
-            holder.unreadCount.setText(String.valueOf(conversation.getUnreadCount()));
+        holder.time.setText(conversation.getLastUpdate());
+
+        int unreadCount = conversation.getUnreadCountForUser(userId);
+        if (unreadCount > 0) {
+            holder.unreadCount.setText(String.valueOf(unreadCount));
             holder.unreadCount.setVisibility(View.VISIBLE);
         } else {
             holder.unreadCount.setVisibility(View.GONE);
         }
-        holder.itemView.setOnClickListener(v -> listener.onItemClick(conversation));
+
+        holder.itemView.setOnClickListener(v -> listener.onItemClick(userId, conversation));
     }
 
     @Override

@@ -14,6 +14,7 @@ import java.util.List;
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHolder> {
 
     private List<Message> messages;
+    private String userId;
 
     public static class MessageViewHolder extends RecyclerView.ViewHolder {
         public TextView messageText;
@@ -26,8 +27,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
         }
     }
 
-    public ChatAdapter(List<Message> messages) {
+    public ChatAdapter(List<Message> messages, String userId) {
         this.messages = messages;
+        this.userId = userId;
     }
 
     @Override
@@ -40,16 +42,20 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
     @Override
     public void onBindViewHolder(MessageViewHolder holder, int position) {
         Message message = messages.get(position);
-        holder.messageText.setText(message.getText());
-        holder.timeText.setText(message.getTime());
+        holder.messageText.setText(message.getContext());
+        holder.timeText.setText(message.getTimestamp());
 
-        // Điều chỉnh vị trí và màu nền dựa trên người gửi
+        // Hiển thị ảnh (nếu có) - hiện tại chỉ hiển thị nội dung văn bản
+        if (message.getMedia() != null && !message.getMedia().isEmpty()) {
+            holder.messageText.append("\n[Image]");
+        }
+
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
-        if (message.isSent()) {
-            params.setMargins(64, 0, 16, 0); // Margin cho tin nhắn gửi
+        if (message.getSender().equals(userId)) {
+            params.setMargins(64, 0, 16, 0);
             holder.messageText.setBackgroundResource(R.drawable.bg_sent_message);
         } else {
-            params.setMargins(16, 0, 64, 0); // Margin cho tin nhắn nhận
+            params.setMargins(16, 0, 64, 0);
             holder.messageText.setBackgroundResource(R.drawable.bg_received_message);
         }
         holder.itemView.setLayoutParams(params);
