@@ -41,18 +41,6 @@
             </intent-filter>
         </activity>
 
-        <!--        Conversation-->
-        <activity
-            android:name=".Home.conversation.ConversationActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".Home.conversation.ChatActivity" />
-
-
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />

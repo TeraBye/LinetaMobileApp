@@ -5,8 +5,11 @@ import java.util.List;
 import java.util.Map;
 
 public class Conversation {
-    @SerializedName("id")
-    private String id; // Document ID của cuộc hội thoại (thêm thủ công từ API)
+    @SerializedName("conversationId")
+    private String conversationId;
+
+    @SerializedName("listUser")
+    private List<String> listUser;
 
     @SerializedName("lastMessage")
     private String lastMessage;
@@ -15,20 +18,21 @@ public class Conversation {
     private String lastSender;
 
     @SerializedName("lastUpdate")
-    private String lastUpdate; // Timestamp dạng String (API có thể đã chuyển đổi)
+    private Long lastUpdate; // Thay đổi thành Long để khớp với timestamp milliseconds
 
-    @SerializedName("listUser")
-    private List<String> listUser; // Danh sách UID người dùng
+    @SerializedName("unreadCount")
+    private Map<String, Long> unreadCount; // Thay đổi thành Long để khớp với backend
 
-    @SerializedName("ureadCount")
-    private Map<String, Integer> ureadCount; // Map UID và số tin chưa đọc
+    @SerializedName("users")
+    private List<UserInfo> users; // Danh sách thông tin người dùng
 
-    public Conversation() {
-    }
+    // Class lồng để ánh xạ thông tin người dùng
 
-    // Getter và Setter
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() { return conversationId; }
+    public void setId(String conversationId) { this.conversationId = conversationId; }
+
+    public List<String> getListUser() { return listUser; }
+    public void setListUser(List<String> listUser) { this.listUser = listUser; }
 
     public String getLastMessage() { return lastMessage; }
     public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
@@ -36,31 +40,43 @@ public class Conversation {
     public String getLastSender() { return lastSender; }
     public void setLastSender(String lastSender) { this.lastSender = lastSender; }
 
-    public String getLastUpdate() { return lastUpdate; }
-    public void setLastUpdate(String lastUpdate) { this.lastUpdate = lastUpdate; }
+    public Long getLastUpdate() { return lastUpdate; }
+    public void setLastUpdate(Long lastUpdate) { this.lastUpdate = lastUpdate; }
 
-    public List<String> getListUser() { return listUser; }
-    public void setListUser(List<String> listUser) { this.listUser = listUser; }
+    public Map<String, Long> getUnreadCount() { return unreadCount; }
+    public void setUnreadCount(Map<String, Long> unreadCount) { this.unreadCount = unreadCount; }
 
-    public Map<String, Integer> getUreadCount() { return ureadCount; }
-    public void setUreadCount(Map<String, Integer> ureadCount) { this.ureadCount = ureadCount; }
+    public List<UserInfo> getUsers() { return users; }
+    public void setUsers(List<UserInfo> users) { this.users = users; }
 
-
+    // Lấy tên người dùng khác (không phải người dùng hiện tại)
     public String getName(String currentUserId) {
-        if (listUser != null) {
-            for (String userId : listUser) {
-                if (!userId.equals(currentUserId)) {
-                    return userId; // Trả về UID của người kia)
+        if (users != null) {
+            for (UserInfo user : users) {
+                if (!user.getId().equals(currentUserId)) {
+                    return user.getFullName() != null ? user.getFullName() : user.getUsername();
                 }
             }
         }
         return "Unknown";
     }
 
+    // Lấy avatar của người dùng khác
+    public String getAvatarUrl(String currentUserId) {
+        if (users != null) {
+            for (UserInfo user : users) {
+                if (!user.getId().equals(currentUserId)) {
+                    return user.getAvatarUrl();
+                }
+            }
+        }
+        return null;
+    }
+
     // Lấy số tin chưa đọc của người dùng hiện tại
-    public int getUnreadCountForUser(String userId) {
-        if (ureadCount != null && ureadCount.containsKey(userId)) {
-            return ureadCount.get(userId);
+    public long getUnreadCountForUser(String userId) {
+        if (unreadCount != null && unreadCount.containsKey(userId)) {
+            return unreadCount.get(userId);
         }
         return 0;
     }

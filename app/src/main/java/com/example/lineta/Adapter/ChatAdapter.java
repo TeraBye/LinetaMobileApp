@@ -1,64 +1,98 @@
 package com.example.lineta.Adapter;
 
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
-
+import com.bumptech.glide.Glide;
 import com.example.lineta.Entity.Message;
+import com.example.lineta.Entity.Timestamp;
 import com.example.lineta.R;
 
 import java.util.List;
 
-public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHolder> {
+public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
 
     private List<Message> messages;
-    private String userId;
+    private String currentUserId;
+    private String contactName;
+    private String contactAvatarUrl;
 
-    public static class MessageViewHolder extends RecyclerView.ViewHolder {
-        public TextView messageText;
-        public TextView timeText;
-
-        public MessageViewHolder(View view) {
-            super(view);
-            messageText = view.findViewById(R.id.messageText);
-            timeText = view.findViewById(R.id.timeText);
-        }
-    }
-
-    public ChatAdapter(List<Message> messages, String userId) {
+    public ChatAdapter(List<Message> messages, String currentUserId, String contactName, String contactAvatarUrl) {
         this.messages = messages;
-        this.userId = userId;
+        this.currentUserId = currentUserId;
+        this.contactName = contactName;
+        this.contactAvatarUrl = contactAvatarUrl;
+    }
+
+    public static class ChatViewHolder extends RecyclerView.ViewHolder {
+        public ImageView avatar;
+        public TextView senderName;
+        public TextView messageContent;
+        public TextView timestamp;
+        public LinearLayout messageContainer;
+        public LinearLayout messageContentContainer;
+
+        public ChatViewHolder(View view) {
+            super(view);
+            avatar = view.findViewById(R.id.avatar);
+            senderName = view.findViewById(R.id.senderName);
+            messageContent = view.findViewById(R.id.messageContent);
+            timestamp = view.findViewById(R.id.timestamp);
+            messageContainer = view.findViewById(R.id.message_container);
+            messageContentContainer = view.findViewById(R.id.message_content_container);
+        }
     }
 
     @Override
-    public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ChatViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_message, parent, false);
-        return new MessageViewHolder(view);
+                .inflate(R.layout.item_chat, parent, false);
+        return new ChatViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(MessageViewHolder holder, int position) {
+    public void onBindViewHolder(ChatViewHolder holder, int position) {
         Message message = messages.get(position);
-        holder.messageText.setText(message.getContext());
-        holder.timeText.setText(message.getTimestamp());
+        String senderId = message.getSenderId();
 
-        // Hiển thị ảnh (nếu có) - hiện tại chỉ hiển thị nội dung văn bản
-        if (message.getMedia() != null && !message.getMedia().isEmpty()) {
-            holder.messageText.append("\n[Image]");
-        }
+        boolean isCurrentUser = currentUserId.equals(senderId);
 
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
-        if (message.getSender().equals(userId)) {
-            params.setMargins(64, 0, 16, 0);
-            holder.messageText.setBackgroundResource(R.drawable.bg_sent_message);
+        if (!isCurrentUser) {
+            holder.senderName.setText(contactName != null ? contactName : "Unknown");
+            if (contactAvatarUrl != null && !contactAvatarUrl.isEmpty()) {
+                Glide.with(holder.itemView.getContext())
+                        .load(contactAvatarUrl)
+                        .placeholder(R.drawable.default_avatar)
+                        .error(R.drawable.default_avatar)
+                        .circleCrop()
+                        .into(holder.avatar);
+            } else {
+                holder.avatar.setImageResource(R.drawable.default_avatar);
+            }
+            holder.avatar.setVisibility(View.VISIBLE);
+            holder.senderName.setVisibility(View.VISIBLE);
+            holder.messageContainer.setGravity(Gravity.START);
+            holder.messageContentContainer.setBackgroundResource(R.drawable.message_background_light_gray);
         } else {
-            params.setMargins(16, 0, 64, 0);
-            holder.messageText.setBackgroundResource(R.drawable.bg_received_message);
+            holder.avatar.setVisibility(View.GONE);
+            holder.senderName.setVisibility(View.GONE);
+            holder.messageContainer.setGravity(Gravity.END);
+            holder.messageContentContainer.setBackgroundResource(R.drawable.message_background_light_blue);
         }
-        holder.itemView.setLayoutParams(params);
+
+        holder.messageContent.setText(message.getContext());
+
+        Timestamp timestamp = message.getTimestamp();
+        if (timestamp != null) {
+            holder.timestamp.setText(timestamp.toRelativeTime());
+        } else {
+            holder.timestamp.setText("Unknown");
+        }
     }
 
     @Override
