@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:background="#3B5998"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đoạn chat"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:layout_gravity="center"
+            android:layout_marginStart="16dp"/>
+    </LinearLayout>
+
+    <!-- Search Bar -->
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Tìm kiếm"
+        android:background="@android:drawable/editbox_background"
+        android:padding="12dp"
+        android:layout_margin="8dp"
+        android:drawableStart="@android:drawable/ic_menu_search"
+        android:drawablePadding="8dp"/>
+
+    <!-- Conversation List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewConversations"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"/>
+</LinearLayout>

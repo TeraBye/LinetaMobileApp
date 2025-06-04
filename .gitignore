@@ -16,3 +16,4 @@ local.properties
 
 #other
 **/google-services.json
+/.idea/

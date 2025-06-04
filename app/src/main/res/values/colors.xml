@@ -22,4 +22,9 @@
     <color name="royal_ant">#FF9800</color>
     <color name="red_heart">#E92518</color>
     <color name="blue_commment">#2196F3</color>
+
+    <!--    Message-->
+    <color name="light_gray_message">#E2E2E2</color>
+    <color name="light_blue_message">#BFD6F8</color>
+    <color name="chat_background">#FFFFFF</color>
 </resources>

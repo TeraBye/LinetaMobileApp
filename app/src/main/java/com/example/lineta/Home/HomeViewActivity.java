@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -27,21 +26,16 @@ import androidx.lifecycle.ViewModelProvider;
 import com.bumptech.glide.Glide;
 import com.example.lineta.AuthActivity.LoginActivity;
 import com.example.lineta.Entity.User;
+import com.example.lineta.Home.conversation.ConversationFragment;
 import com.example.lineta.Home.modalPost.CreatePostBottomSheet;
 import com.example.lineta.R;
 import com.example.lineta.Search.SearchActivity;
 import com.example.lineta.ViewModel.UserViewModel;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
-import com.example.lineta.dto.response.ApiResponse;
-import com.example.lineta.service.UserService;
-import com.example.lineta.service.client.ApiClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import com.google.firebase.auth.FirebaseUser;
 
 public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
     FirebaseAuth mAuth;
@@ -49,6 +43,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     DrawerLayout drawerLayout;
     NavigationView navigationView;
     UserViewModel userViewModel;
+    private String uid;
+    private String token;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -59,6 +55,19 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         EdgeToEdge.enable(this); // Bắt buộc cho version Android mới
 
         mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            uid = currentUser.getUid();
+            currentUser.getIdToken(true).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    token = task.getResult().getToken();
+                } else {
+                    Toast.makeText(this, "Không lấy được token", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            Toast.makeText(this, "current user is null", Toast.LENGTH_SHORT).show();
+        }
 
         // Initialize ViewModel
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
@@ -128,7 +137,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             } else if (itemId == R.id.friends) {
                 selectedFragment = new FriendsFragment();
             } else if (itemId == R.id.message) {
-                selectedFragment = new MessageFragment();
+                selectedFragment = ConversationFragment.newInstance(uid, token); // Truyền userId và token
             } else if (itemId == R.id.notification) {
                 selectedFragment = new NotificationFragment();
             }
