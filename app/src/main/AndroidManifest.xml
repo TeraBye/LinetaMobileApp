@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".App"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -15,8 +17,11 @@
         android:theme="@style/Base.Theme.Lineta"
         tools:targetApi="31">
         <activity
+            android:name=".Search.SearchActivity"
+            android:exported="false" />
+        <activity
             android:name=".Home.HomeViewActivity"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".AuthActivity.RegisterViewActivity"
             android:exported="false" />
@@ -36,10 +41,9 @@
             </intent-filter>
         </activity>
 
-
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
     </application>
-    <uses-permission android:name="android.permission.INTERNET"/>
+
 </manifest>

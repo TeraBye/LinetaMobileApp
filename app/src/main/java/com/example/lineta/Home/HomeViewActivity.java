@@ -1,15 +1,15 @@
 package com.example.lineta.Home;
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -21,17 +21,30 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
+import com.example.lineta.AuthActivity.LoginActivity;
+import com.example.lineta.Entity.User;
+import com.example.lineta.Home.conversation.ConversationFragment;
 import com.example.lineta.Home.modalPost.CreatePostBottomSheet;
 import com.example.lineta.R;
+import com.example.lineta.Search.SearchActivity;
+import com.example.lineta.ViewModel.UserViewModel;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
-
+    FirebaseAuth mAuth;
     ActivityHomeViewBinding binding;
     DrawerLayout drawerLayout;
+    NavigationView navigationView;
+    UserViewModel userViewModel;
+    private String uid;
+    private String token;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -40,6 +53,43 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         binding = ActivityHomeViewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         EdgeToEdge.enable(this); // Bắt buộc cho version Android mới
+
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            uid = currentUser.getUid();
+            currentUser.getIdToken(true).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    token = task.getResult().getToken();
+                } else {
+                    Toast.makeText(this, "Không lấy được token", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            Toast.makeText(this, "current user is null", Toast.LENGTH_SHORT).show();
+        }
+
+        // Initialize ViewModel
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+
+
+        // Handle intent from SearchActivity
+        Intent intent = getIntent();
+        if (intent != null && intent.getBooleanExtra("navigate_to_profile", false)) {
+            String userId = intent.getStringExtra("selected_user_id");
+            replaceFragment(AccountFragment.newInstance(userId));
+            userViewModel.fetchUserInfo(userId);
+        } else {
+            userViewModel.fetchUserInfo(); // Fetch current user's info
+            userViewModel.getUserLiveData().observe(this, user -> {
+                if (user != null) {
+                    updateHeader(user);
+                }
+            });
+            if (savedInstanceState == null) {
+                replaceFragment(new HomeFragment());
+            }
+        }
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
             Window window = this.getWindow();
@@ -57,7 +107,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         //getSupportActionBar().hide(); // Ẩn tên App mặc định
 
         drawerLayout = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_drawer);
+        navigationView = findViewById(R.id.nav_drawer);
         navigationView.setNavigationItemSelectedListener(this);
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav);
@@ -68,7 +118,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         if (savedInstanceState == null) {
             replaceFragment(new HomeFragment());
         }
-
 
 
         binding.bottomNavigationView.setBackground(null);
@@ -88,7 +137,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             } else if (itemId == R.id.friends) {
                 selectedFragment = new FriendsFragment();
             } else if (itemId == R.id.message) {
-                selectedFragment = new MessageFragment();
+                selectedFragment = ConversationFragment.newInstance(uid, token); // Truyền userId và token
             } else if (itemId == R.id.notification) {
                 selectedFragment = new NotificationFragment();
             }
@@ -98,6 +147,20 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             }
             return true;
         });
+    }
+
+    private void updateHeader(User user) {
+        View headerView = navigationView.getHeaderView(0);
+
+        ImageView avatarImage = headerView.findViewById(R.id.avatar);
+        TextView usernameText = headerView.findViewById(R.id.tvUsernameHeader);
+
+        usernameText.setText(user.getUsername());
+
+        Glide.with(this)
+                .load(user.getProfilePicURL())
+                .placeholder(R.drawable.default_avatar)
+                .into(avatarImage);
     }
 
     private void replaceFragment(Fragment fragment){
@@ -110,11 +173,27 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.drawer_account) {
             replaceFragment(new AccountFragment());
+        } else if (item.getItemId() == R.id.drawer_search) {
+            Intent intent = new Intent(this, SearchActivity.class);
+            startActivity(intent);
         } else if (item.getItemId() == R.id.drawer_settings) {
             replaceFragment(new SettingsFragment());
+        } else if (item.getItemId() == R.id.drawer_logout) {
+            logout();
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private void logout() {
+        mAuth.signOut();
+
+        Intent intent = new Intent(HomeViewActivity.this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+    }
+
 }

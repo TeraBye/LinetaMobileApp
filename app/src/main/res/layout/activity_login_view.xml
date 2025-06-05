@@ -10,7 +10,7 @@
 
     <androidx.cardview.widget.CardView
         android:layout_width="320dp"
-        android:layout_height="447dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="216dp"
         android:background="@drawable/custom_edittext"
         app:cardCornerRadius="30dp"
@@ -21,12 +21,11 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:layout_width="322dp"
-            android:layout_height="430dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="20dp"
             tools:ignore="ExtraText">
-
 
             <TextView
                 android:id="@+id/textView2"
@@ -39,7 +38,7 @@
                 android:textSize="30sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <AutoCompleteTextView
                 android:id="@+id/edtEmail"
                 android:layout_width="match_parent"
                 android:layout_height="43dp"
@@ -50,24 +49,46 @@
                 android:drawableLeft="@drawable/baseline_person_24"
                 android:hint="Email"
                 android:padding="10dp"
-
-                android:textColorHighlight="@color/cardview_dark_background"
-                 />
-
-            <EditText
-                android:id="@+id/edtPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/custom_edittext"
-                android:drawableLeft="@android:drawable/ic_secure"
-                android:drawablePadding="15dp"
-                android:ems="10"
-                android:hint="Password"
-                android:inputType="textPassword"
-                android:padding="10dp"
                 android:textColorHighlight="@color/cardview_dark_background" />
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp">
+
+                <EditText
+                    android:id="@+id/edtPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/custom_edittext"
+                    android:drawableLeft="@android:drawable/ic_secure"
+                    android:drawablePadding="15dp"
+                    android:ems="10"
+                    android:hint="Password"
+                    android:inputType="textPassword"
+                    android:padding="10dp"
+                    android:textColorHighlight="@color/cardview_dark_background" />
+
+                <ImageView
+                    android:id="@+id/togglePasswordVisibility"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="10dp"
+                    android:src="@drawable/ic_eye_off"
+                    android:contentDescription="Toggle password visibility" />
+
+            </RelativeLayout>
+
+            <CheckBox
+                android:id="@+id/chkSaveCredentials"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Save email and password"
+                android:textColor="#101010"
+                android:checked="true" />
             <Button
                 android:id="@+id/btnLoginEnter"
                 android:layout_width="match_parent"
@@ -106,7 +127,6 @@
                 android:textStyle="bold"
                 app:cornerRadius="20dp" />
 
-
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
@@ -120,5 +140,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/header_login"
         tools:layout_editor_absoluteY="-39dp" />
+
+    <View
+        android:id="@+id/dimBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:visibility="gone"
+        android:elevation="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/profilePic"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/default_avatar"
+        app:shapeAppearanceOverlay="@style/CircleImageView" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="terabye" />
+
+        <TextView
+            android:id="@+id/tvFullName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/gray_dark"
+            android:layout_marginTop="2dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Luân Giáo Sư" />
+
+    </LinearLayout>
+
+    <!-- Delete Button -->
+    <ImageView
+        android:id="@+id/deleteButton"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_close_small"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        android:contentDescription="Remove from recent searches"
+        android:padding="4dp" />
+
+</LinearLayout>
