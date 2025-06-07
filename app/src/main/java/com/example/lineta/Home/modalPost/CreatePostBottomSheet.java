@@ -11,7 +11,6 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -23,16 +22,29 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.lineta.R;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Objects;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.UUID;
+
+import com.example.lineta.ViewModel.UserViewModel;
+import com.example.lineta.Entity.User;
 
 public class CreatePostBottomSheet extends BottomSheetDialogFragment {
 
     private ActivityResultLauncher<Intent> pickFileLauncher;
     private Uri selectedFileUri;
+    private String mimeType;
+
+    Cloudinary cloudinary;
+    UserViewModel userViewModel;
 
     public static CreatePostBottomSheet newInstance() {
         return new CreatePostBottomSheet();
@@ -41,6 +53,12 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", "dcktmrvyv",
+                "api_key", "612279453445321",
+                "api_secret", "fRNSfZ7U8x2kfEdWaQBsmZTgzfU"
+        ));
 
         pickFileLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -51,21 +69,18 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
                             ImageView previewImage = getView().findViewById(R.id.previewImage);
                             previewImage.setVisibility(View.VISIBLE);
 
-                            String mimeType = getMimeType(selectedFileUri);
+                            mimeType = getMimeType(selectedFileUri);
 
                             if (mimeType != null && mimeType.startsWith("image/")) {
-                                // Load ảnh bằng Glide
                                 Glide.with(requireContext()).load(selectedFileUri).into(previewImage);
                             } else if (mimeType != null && mimeType.startsWith("video/")) {
-                                // Lấy thumbnail video
-                                Bitmap thumbnail = null;
                                 try {
-                                    thumbnail = getVideoThumbnail(selectedFileUri);
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                                if (thumbnail != null) {
-                                    previewImage.setImageBitmap(thumbnail);
+                                    Bitmap thumbnail = getVideoThumbnail(selectedFileUri);
+                                    if (thumbnail != null) {
+                                        previewImage.setImageBitmap(thumbnail);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
                                 }
                             } else {
                                 previewImage.setVisibility(View.GONE);
@@ -120,13 +135,53 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
 
         btnPost.setOnClickListener(v -> {
             String content = edtContent.getText().toString().trim();
-            if (!content.isEmpty()) {
-                // TODO: Gửi content + file lên server
-                dismiss();
+            if (content.isEmpty()) return;
+
+            btnPost.setEnabled(false);
+            btnPost.setText("Posting...");
+
+            if (selectedFileUri != null) {
+                new Thread(() -> {
+                    try {
+                        File file = createFileFromUri(selectedFileUri);
+                        Map uploadResult = cloudinary.uploader().upload(file, ObjectUtils.emptyMap());
+
+                        String mediaUrl = uploadResult.get("secure_url").toString();
+
+                        requireActivity().runOnUiThread(() -> {
+                            sendPostToFirebase(content, mediaUrl);
+                            btnPost.setEnabled(true);
+                            btnPost.setText("Post");
+                            dismiss();
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        requireActivity().runOnUiThread(() -> {
+                            btnPost.setEnabled(true);
+                            btnPost.setText("Post");
+                        });
+                    }
+                }).start();
+            } else {
+                sendPostToFirebase(content, null);
             }
         });
 
         return view;
+    }
+
+    private File createFileFromUri(Uri uri) throws Exception {
+        InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+        File tempFile = File.createTempFile("upload", ".tmp", requireContext().getCacheDir());
+        FileOutputStream outputStream = new FileOutputStream(tempFile);
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, bytesRead);
+        }
+        outputStream.close();
+        inputStream.close();
+        return tempFile;
     }
 
     private String getMimeType(Uri uri) {
@@ -138,12 +193,16 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
             retriever.setDataSource(requireContext(), uri);
-            return retriever.getFrameAtTime(0); // lấy frame đầu
+            return retriever.getFrameAtTime(0);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         } finally {
             retriever.release();
         }
+    }
+
+    private void sendPostToFirebase(String content, String mediaUrl) {
+
     }
 }
