@@ -1,4 +1,4 @@
-package com.example.lineta.Home;
+package com.example.lineta.Home.profile;
 
 import android.os.Bundle;
 
@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +16,9 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.lineta.Adapter.SettingAdapter;
-import com.example.lineta.Entity.User;
 import com.example.lineta.R;
+import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.ViewModel.UserViewModel;
-import com.example.lineta.dto.response.ApiResponse;
-import com.example.lineta.service.UserService;
-import com.example.lineta.service.client.ApiClient;
 import com.google.android.material.imageview.ShapeableImageView;
 
 import java.util.Arrays;
@@ -39,6 +35,7 @@ public class AccountFragment extends Fragment {
     TextView tvUsername, tvFullname, tvPostNum, tvFollowerNum, tvFollowingNum;
     ShapeableImageView avatar;
     UserViewModel userViewModel;
+    CurrentUserViewModel currentUserViewModel;
     String userId;
 
     public static AccountFragment newInstance(String userId) {
@@ -78,31 +75,62 @@ public class AccountFragment extends Fragment {
         avatar = view.findViewById(R.id.avatar);
 
         userViewModel = new ViewModelProvider(requireActivity()).get(UserViewModel.class);
+        currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
 
-        userViewModel.fetchUserInfo(userId);
+        if (userId != null) { // Get other user
+            userViewModel.fetchUserInfo(userId);
+            userViewModel.getUserLiveData().observe(getViewLifecycleOwner(), user -> {
+                tvUsername.setText(user.getUsername());
+                tvFullname.setText(user.getFullName());
+                tvPostNum.setText(String.valueOf(user.getPostNum()));
+                tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
+                tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
 
-        userViewModel.getUserLiveData().observe(getViewLifecycleOwner(), user -> {
-            tvUsername.setText(user.getUsername());
-            tvFullname.setText(user.getFullName());
-            tvPostNum.setText(String.valueOf(user.getPostNum()));
-            tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
-            tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
+                if (user.getProfilePicURL() != null) {
+                    Glide.with(requireContext())
+                            .load(user.getProfilePicURL())
+                            .placeholder(R.drawable.default_avatar)
+                            .into(avatar);
+                }
+            });
 
-            if (user.getProfilePicURL() != null) {
-                Glide.with(requireContext())
-                        .load(user.getProfilePicURL())
-                        .placeholder(R.drawable.default_avatar)
-                        .into(avatar);
-            }
-        });
-
-        // Observe errors
-        userViewModel.getErrorLiveData().observe(getViewLifecycleOwner(), error -> {
+            // Observe errors
+            userViewModel.getErrorLiveData().observe(getViewLifecycleOwner(), error -> {
 //            loadingProgressBar.setVisibility(View.GONE);
-            if (error != null) {
-                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
-            }
-        });
+                if (error != null) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+
+        } else { // get current user
+            currentUserViewModel.fetchCurrentUserInfo();
+            currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
+                tvUsername.setText(user.getUsername());
+                tvFullname.setText(user.getFullName());
+                tvPostNum.setText(String.valueOf(user.getPostNum()));
+                tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
+                tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
+
+                if (user.getProfilePicURL() != null) {
+                    Glide.with(requireContext())
+                            .load(user.getProfilePicURL())
+                            .placeholder(R.drawable.default_avatar)
+                            .into(avatar);
+                }
+            });
+
+            // Observe errors
+            currentUserViewModel.getErrorLiveData().observe(getViewLifecycleOwner(), error -> {
+//            loadingProgressBar.setVisibility(View.GONE);
+                if (error != null) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        }
+
+
 
         return view;
 
