@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -28,8 +29,10 @@ import com.example.lineta.AuthActivity.LoginActivity;
 import com.example.lineta.Entity.User;
 import com.example.lineta.Home.conversation.ConversationFragment;
 import com.example.lineta.Home.modalPost.CreatePostBottomSheet;
+import com.example.lineta.Home.profile.AccountFragment;
 import com.example.lineta.R;
 import com.example.lineta.Search.SearchActivity;
+import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.ViewModel.UserViewModel;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -37,14 +40,16 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
+public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     FirebaseAuth mAuth;
     ActivityHomeViewBinding binding;
     DrawerLayout drawerLayout;
     NavigationView navigationView;
     UserViewModel userViewModel;
+    CurrentUserViewModel currentUserViewModel;
     private String uid;
     private String token;
+    private boolean isShowingProfile = false;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -69,29 +74,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             Toast.makeText(this, "current user is null", Toast.LENGTH_SHORT).show();
         }
 
-        // Initialize ViewModel
-        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
-
-
-        // Handle intent from SearchActivity
-        Intent intent = getIntent();
-        if (intent != null && intent.getBooleanExtra("navigate_to_profile", false)) {
-            String userId = intent.getStringExtra("selected_user_id");
-            replaceFragment(AccountFragment.newInstance(userId));
-            userViewModel.fetchUserInfo(userId);
-        } else {
-            userViewModel.fetchUserInfo(); // Fetch current user's info
-            userViewModel.getUserLiveData().observe(this, user -> {
-                if (user != null) {
-                    updateHeader(user);
-                }
-            });
-            if (savedInstanceState == null) {
-                replaceFragment(new HomeFragment());
-            }
-        }
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
             window.setStatusBarColor(this.getResources().getColor(R.color.white));
         }
@@ -101,7 +84,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-
 
 
         //getSupportActionBar().hide(); // Ẩn tên App mặc định
@@ -129,6 +111,11 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         });
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
+            if (isShowingProfile) {
+                isShowingProfile = false; // Cho phép thay đổi fragment sau lần đầu
+                return false; // Ngăn bottom navigation ghi đè ngay lập tức
+            }
+
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
 
@@ -147,9 +134,45 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             }
             return true;
         });
+
+        // Initialize ViewModel
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        currentUserViewModel = new ViewModelProvider(this).get(CurrentUserViewModel.class);
+
+//        Update sidebar user info
+        currentUserViewModel.fetchCurrentUserInfo();
+        currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
+            if (user != null) {
+                updateHeader(user);
+            }
+        });
+
+        // Handle intent from SearchActivity
+        Intent intent = getIntent();
+
+        if (intent != null && intent.getBooleanExtra("navigate_to_profile", false)) {
+            String userId = intent.getStringExtra("selected_user_id");
+            if (userId != null) {
+                Log.e("User Id", userId);
+                replaceFragment(AccountFragment.newInstance(userId));
+                // Gọi ViewModel nếu cần lấy dữ liệu người dùng
+                userViewModel.fetchUserInfo(userId);
+                isShowingProfile = true;
+            } else {
+                Log.e("HomeViewActivity", "userId bị null");
+            }
+        } else {
+//            userViewModel.fetchUserInfo(); // Fetch current user's info
+
+            if (savedInstanceState == null) {
+                replaceFragment(new HomeFragment());
+            }
+        }
+
     }
 
     private void updateHeader(User user) {
+        Log.i("updateHeader User", user.getUsername());
         View headerView = navigationView.getHeaderView(0);
 
         ImageView avatarImage = headerView.findViewById(R.id.avatar);
@@ -163,12 +186,13 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 .into(avatarImage);
     }
 
-    private void replaceFragment(Fragment fragment){
+    private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout,fragment);
+        fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.commit();
     }
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.drawer_account) {

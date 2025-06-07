@@ -16,14 +16,15 @@
         android:src="@drawable/professor"
         android:scaleType="centerCrop"
         android:layout_gravity="center"/>
+
     <TextView
         android:id="@+id/tvUsernameHeader"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/professor"
-        android:textStyle="bold"
+        android:layout_height="41dp"
         android:fontFamily="@font/darumadrop_one"
         android:gravity="center"
-        android:textSize="20sp"/>
+        android:text="@string/professor"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     </LinearLayout>

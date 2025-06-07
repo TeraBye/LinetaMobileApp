@@ -33,13 +33,14 @@ public class UserViewModel extends ViewModel {
         isFetching = true;
 
         UserService userService = ApiClient.getRetrofit().create(UserService.class);
-        Call<ApiResponse<User>> call = userId == null ? userService.getUserInfo() : userService.getUserById(userId);
+        Call<ApiResponse<User>> call = userService.getUserById(userId);
         call.enqueue(new Callback<ApiResponse<User>>() {
             @Override
             public void onResponse(Call<ApiResponse<User>> call, Response<ApiResponse<User>> response) {
                 isFetching = false;
                 if (response.isSuccessful() && response.body() != null) {
                     userLiveData.setValue(response.body().getResult());
+                    Log.i("User Response (View Model)", response.body().getResult().getFullName());
 //                    saveUserToCache(user, userId);
                 } else {
                     errorLiveData.setValue("Failed to load user info: " + response.code());
