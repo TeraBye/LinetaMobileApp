@@ -23,8 +23,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
-        app:tabIndicatorColor="?attr/colorPrimary"
-        app:tabSelectedTextColor="?attr/colorPrimary"
+        app:tabIndicatorColor="@color/royal_ant"
+        app:tabSelectedTextColor="@color/royal_ant"
         app:tabTextColor="?android:attr/textColorSecondary" />
 
     <!-- Search Bar -->

@@ -1,5 +1,6 @@
 package com.example.lineta.Home.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -11,15 +12,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.lineta.Adapter.SettingAdapter;
+import com.example.lineta.Home.HomeViewActivity;
 import com.example.lineta.R;
 import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.ViewModel.UserViewModel;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Arrays;
 
@@ -37,6 +41,8 @@ public class AccountFragment extends Fragment {
     UserViewModel userViewModel;
     CurrentUserViewModel currentUserViewModel;
     String userId;
+    LinearLayout followersLayout, followingLayout;
+
 
     public static AccountFragment newInstance(String userId) {
         AccountFragment fragment = new AccountFragment();
@@ -73,6 +79,10 @@ public class AccountFragment extends Fragment {
         tvFollowerNum = view.findViewById(R.id.tvFollowerNum);
         tvFollowingNum = view.findViewById(R.id.tvFollowingNum);
         avatar = view.findViewById(R.id.avatar);
+
+        followersLayout = view.findViewById(R.id.followersLayout);
+        followingLayout = view.findViewById(R.id.followingLayout);
+        setupClickFollowListeners();
 
         userViewModel = new ViewModelProvider(requireActivity()).get(UserViewModel.class);
         currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
@@ -130,9 +140,26 @@ public class AccountFragment extends Fragment {
 
         }
 
-
-
         return view;
 
+    }
+
+    private void setupClickFollowListeners() {
+        String currentUserId = FirebaseAuth.getInstance().getUid();
+        followersLayout.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), FollowListActivity.class);
+            intent.putExtra("type", "followers");
+            intent.putExtra("title", "Followers");
+            intent.putExtra("user_id", userId != null ? userId : currentUserId);
+            startActivity(intent);
+        });
+
+        followingLayout.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), FollowListActivity.class);
+            intent.putExtra("type", "following");
+            intent.putExtra("title", "Following");
+            intent.putExtra("user_id", userId != null ? userId : currentUserId);
+            startActivity(intent);
+        });
     }
 }

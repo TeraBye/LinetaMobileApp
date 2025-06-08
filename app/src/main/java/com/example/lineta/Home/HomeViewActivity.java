@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,7 @@ import com.example.lineta.Entity.User;
 import com.example.lineta.Home.conversation.ConversationFragment;
 import com.example.lineta.Home.modalPost.CreatePostBottomSheet;
 import com.example.lineta.Home.profile.AccountFragment;
+import com.example.lineta.Home.profile.FollowListActivity;
 import com.example.lineta.R;
 import com.example.lineta.Search.SearchActivity;
 import com.example.lineta.ViewModel.CurrentUserViewModel;
@@ -139,7 +141,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         currentUserViewModel = new ViewModelProvider(this).get(CurrentUserViewModel.class);
 
-//        Update sidebar user info
+//        Update sidebar user infoS
         currentUserViewModel.fetchCurrentUserInfo();
         currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
             if (user != null) {
@@ -168,6 +170,9 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 replaceFragment(new HomeFragment());
             }
         }
+
+//        Follower/following
+
 
     }
 

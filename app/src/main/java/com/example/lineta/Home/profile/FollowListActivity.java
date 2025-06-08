@@ -1,9 +1,16 @@
 package com.example.lineta.Home.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
@@ -12,31 +19,53 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.lineta.Adapter.FollowAdapter;
 import com.example.lineta.Adapter.UserSearchAdapter;
 import com.example.lineta.Entity.User;
+import com.example.lineta.Home.HomeViewActivity;
 import com.example.lineta.R;
+import com.example.lineta.dto.response.ApiResponse;
+import com.example.lineta.dto.response.UserFollowResponse;
+import com.example.lineta.service.FriendService;
+import com.example.lineta.service.client.ApiClient;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class FollowListActivity extends AppCompatActivity {
-    private RecyclerView recyclerView;
-    private EditText searchEditText;
-    private UserSearchAdapter userAdapter;
-    private List<User> userList;
-    private List<User> filteredList;
-    private String listType;
+    RecyclerView recyclerView;
+    EditText searchEditText;
+    FollowAdapter followAdapter;
+    List<UserFollowResponse> userList;
+//    List<UserFollowResponse> filteredList;
+    String listType;
+    String userId;
+    int currentPage = 1;
+    final int PAGE_SIZE = 5;
+    boolean isLoading = false;
+    boolean isLastPage = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_follow_list);
 
+        userId = getIntent().getStringExtra("user_id");
+
         initViews();
         setupToolbar();
-//        loadData();
-//        setupSearch();
+        setupSearch();
+        setupRecyclerViewScrollListener();
+        loadData();
     }
 
     // Thêm vào phần initViews() trong FollowListActivity.java
@@ -46,6 +75,11 @@ public class FollowListActivity extends AppCompatActivity {
         TabLayout tabLayout = findViewById(R.id.tabLayout);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        userList = new ArrayList<>();
+//        filteredList = new ArrayList<>();
+        followAdapter = new FollowAdapter(userList, this);
+        recyclerView.setAdapter(followAdapter);
 
         listType = getIntent().getStringExtra("type");
         String title = getIntent().getStringExtra("title");
@@ -74,14 +108,24 @@ public class FollowListActivity extends AppCompatActivity {
                     listType = "following";
                     setTitle("Following");
                 }
-//                loadData();
+                Log.d("FollowListActivity", "Tab selected: " + listType + ", userId=" + userId);
+                loadData();
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+        // Setup click listeners
+        followAdapter.setOnItemClickListener(userId -> {
+            Intent intent = new Intent(FollowListActivity.this, HomeViewActivity.class);
+            intent.putExtra("navigate_to_profile", true);
+            intent.putExtra("selected_user_id", userId);
+            startActivity(intent);
         });
     }
 
@@ -94,64 +138,122 @@ public class FollowListActivity extends AppCompatActivity {
         }
     }
 
-//    private void loadData() {
-//        userList = new ArrayList<>();
-//
-//        if ("followers".equals(listType)) {
-//            // Sample followers data
-//            userList.add(new User("zuck", "Mark Zuckerberg", "https://example.com/avatar1.jpg", false));
-//            userList.add(new User("mkbhd", "Marques Brownlee", "https://example.com/avatar2.jpg", false));
-//            userList.add(new User("vfriedman", "Vitaly Friedman", "https://example.com/avatar3.jpg", false));
-//        } else {
-//            // Sample following data
-//            userList.add(new User("gal_gadot", "Gal Gadot", "https://example.com/avatar4.jpg", true));
-//            userList.add(new User("danielbenol", "Daniel Benol", "https://example.com/avatar5.jpg", true));
-//            userList.add(new User("bof", "The Business of Fashion", "https://example.com/avatar6.jpg", true));
-//            userList.add(new User("nike", "Nike", "https://example.com/avatar7.jpg", true));
-//            userList.add(new User("adidas", "Adidas", "https://example.com/avatar8.jpg", true));
-//        }
-//
-//        filteredList = new ArrayList<>(userList);
-//        userAdapter = new UserAdapter(filteredList, listType);
-//        recyclerView.setAdapter(userAdapter);
-//    }
-//
-//    private void setupSearch() {
-//        searchEditText.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-//
-//            @Override
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//                filterUsers(s.toString());
-//            }
-//
-//            @Override
-//            public void afterTextChanged(Editable s) {}
-//        });
-//    }
-//
-//    private void filterUsers(String query) {
+    private void setupSearch() {
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterUsers(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+    }
+
+    private void filterUsers(String query) {
+        List<UserFollowResponse> filtered = new ArrayList<>();
+        if (query.isEmpty()) {
+            filtered.addAll(userList);
+        } else {
+            for (UserFollowResponse user : userList) {
+                if (user.getUsername().toLowerCase().contains(query.toLowerCase()) ||
+                        user.getFullName().toLowerCase().contains(query.toLowerCase())) {
+                    filtered.add(user);
+                }
+            }
+        }
+        Log.d("FollowListActivity", "Filtered list size: " + filtered.size());
+        followAdapter.setUsers(filtered); // Sử dụng setUsers
+    }
+
+    private void setupRecyclerViewScrollListener() {
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (layoutManager != null && !isLoading && !isLastPage) {
+                    int visibleItemCount = layoutManager.getChildCount();
+                    int totalItemCount = layoutManager.getItemCount();
+                    int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+
+                    if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount - 1) {
+                        loadMoreData();
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadData() {
+        currentPage = 1;
+        isLastPage = false;
+        userList.clear();
 //        filteredList.clear();
-//        if (query.isEmpty()) {
-//            filteredList.addAll(userList);
-//        } else {
-//            for (User user : userList) {
-//                if (user.getUsername().toLowerCase().contains(query.toLowerCase()) ||
-//                        user.getDisplayName().toLowerCase().contains(query.toLowerCase())) {
-//                    filteredList.add(user);
-//                }
-//            }
-//        }
-//        userAdapter.notifyDataSetChanged();
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        if (item.getItemId() == android.R.id.home) {
-//            onBackPressed();
-//            return true;
-//        }
-//        return super.onOptionsItemSelected(item);
-//    }
+        searchEditText.setText("");
+        followAdapter.clearUsers();
+        loadMoreData();
+    }
+
+    private void loadMoreData() {
+        if (isLoading || isLastPage) return;
+
+        isLoading = true;
+        recyclerView.post(() -> followAdapter.setLoading(true));
+
+
+        FriendService friendService = ApiClient.getRetrofit().create(FriendService.class);
+        Call<ApiResponse<List<UserFollowResponse>>> call = "followers".equals(listType) ?
+                friendService.getFollowers(userId, currentPage, PAGE_SIZE) :
+                friendService.getFollowing(userId, currentPage, PAGE_SIZE);
+
+        call.enqueue(new Callback<ApiResponse<List<UserFollowResponse>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<UserFollowResponse>>> call, Response<ApiResponse<List<UserFollowResponse>>> response) {
+                isLoading = false;
+                followAdapter.setLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    List<UserFollowResponse> newUsers = response.body().getResult();
+                    if (newUsers.isEmpty() || newUsers.size() < PAGE_SIZE) {
+                        isLastPage = true;
+                    }
+                    if (currentPage == 1) {
+                        userList.clear();
+                        userList.addAll(newUsers);
+                        followAdapter.setUsers(userList);
+                    }
+                    else {
+                        userList.addAll(newUsers);
+                        followAdapter.addUsers(newUsers);
+                    }
+                    currentPage++;
+                } else {
+                    Toast.makeText(FollowListActivity.this, "Failed to load data " + response.body(), Toast.LENGTH_SHORT).show();
+                    Log.e("Failed to load data", response.body().getResult().toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<UserFollowResponse>>> call, Throwable t) {
+                isLoading = false;
+                followAdapter.setLoading(false);
+                Toast.makeText(FollowListActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            getOnBackPressedDispatcher().onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }
