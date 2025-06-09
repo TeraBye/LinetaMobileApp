@@ -45,7 +45,7 @@ public class FollowListActivity extends AppCompatActivity {
     EditText searchEditText;
     FollowAdapter followAdapter;
     List<UserFollowResponse> userList;
-//    List<UserFollowResponse> filteredList;
+    //    List<UserFollowResponse> filteredList;
     String listType;
     String userId;
     int currentPage = 1;
@@ -181,8 +181,10 @@ public class FollowListActivity extends AppCompatActivity {
                     int visibleItemCount = layoutManager.getChildCount();
                     int totalItemCount = layoutManager.getItemCount();
                     int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+                    int lastVisiblePosition = firstVisibleItemPosition + visibleItemCount - 1;
 
-                    if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount - 1) {
+                    Log.d("FollowListActivity", "Scrolled - visible: " + visibleItemCount + ", total: " + totalItemCount + ", last: " + lastVisiblePosition);
+                    if (lastVisiblePosition == totalItemCount - 1 && totalItemCount > 0) {
                         loadMoreData();
                     }
                 }
@@ -206,7 +208,6 @@ public class FollowListActivity extends AppCompatActivity {
         isLoading = true;
         recyclerView.post(() -> followAdapter.setLoading(true));
 
-
         FriendService friendService = ApiClient.getRetrofit().create(FriendService.class);
         Call<ApiResponse<List<UserFollowResponse>>> call = "followers".equals(listType) ?
                 friendService.getFollowers(userId, currentPage, PAGE_SIZE) :
@@ -225,13 +226,9 @@ public class FollowListActivity extends AppCompatActivity {
                     }
                     if (currentPage == 1) {
                         userList.clear();
-                        userList.addAll(newUsers);
-                        followAdapter.setUsers(userList);
                     }
-                    else {
-                        userList.addAll(newUsers);
-                        followAdapter.addUsers(newUsers);
-                    }
+                    userList.addAll(newUsers);
+                    followAdapter.addUsers(newUsers);
                     currentPage++;
                 } else {
                     Toast.makeText(FollowListActivity.this, "Failed to load data " + response.body(), Toast.LENGTH_SHORT).show();

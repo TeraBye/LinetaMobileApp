@@ -15,7 +15,7 @@
 
     <androidx.cardview.widget.CardView
         android:layout_width="326dp"
-        android:layout_height="484dp"
+        android:layout_height="550dp"
         android:elevation="30dp"
         app:cardCornerRadius="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -25,7 +25,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="473dp"
+            android:layout_height="540dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -41,6 +41,20 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etxtEmail"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/custom_edittext"
+                android:drawableLeft="@android:drawable/sym_action_email"
+                android:drawablePadding="15dp"
+                android:ems="10"
+                android:gravity="start|top"
+                android:hint="E-mail"
+                android:inputType="textMultiLine"
+                android:padding="10dp" />
+
+            <EditText
                 android:id="@+id/etxtUsernameRegister"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
@@ -50,6 +64,20 @@
                 android:drawablePadding="8dp"
                 android:ems="10"
                 android:hint="Username"
+                android:inputType="text"
+                android:padding="10dp"
+                tools:ems="10" />
+
+            <EditText
+                android:id="@+id/etxtFullnameRegister"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/custom_edittext"
+                android:drawableLeft="@drawable/baseline_person_24"
+                android:drawablePadding="8dp"
+                android:ems="10"
+                android:hint="Fullname"
                 android:inputType="text"
                 android:padding="10dp"
                 tools:ems="10" />
@@ -83,20 +111,6 @@
                 android:inputType="textMultiLine"
                 android:padding="10dp"
                 tools:inputType="textPassword" />
-
-            <EditText
-                android:id="@+id/etxtEmail"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/custom_edittext"
-                android:drawableLeft="@android:drawable/sym_action_email"
-                android:drawablePadding="15dp"
-                android:ems="10"
-                android:gravity="start|top"
-                android:hint="E-mail"
-                android:inputType="textMultiLine"
-                android:padding="10dp" />
 
             <Button
                 android:id="@+id/btnRegisterEnter"

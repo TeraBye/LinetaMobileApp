@@ -21,9 +21,6 @@ public class UserViewModel extends ViewModel {
     private MutableLiveData<String> errorLiveData = new MutableLiveData<>();
     private boolean isFetching = false;
 
-    public void fetchUserInfo() {
-        fetchUserInfo(null);
-    }
     public void fetchUserInfo(String userId) {
 //        User cachedUser = loadUserFromCache(userId);
 //        if (cachedUser != null) {
