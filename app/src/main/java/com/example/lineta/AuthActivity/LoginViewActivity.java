@@ -13,6 +13,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -48,6 +49,7 @@ public class LoginViewActivity extends AppCompatActivity {
     CheckBox chkSaveCredentials;
     ProgressBar progressBar;
     View dimBackground;
+    TextView tvForgotPassword;
     ImageView togglePasswordVisibility;
     FirebaseAuth mAuth;
     Intent intentLoginView;
@@ -68,6 +70,7 @@ public class LoginViewActivity extends AppCompatActivity {
         chkSaveCredentials = findViewById(R.id.chkSaveCredentials);
         progressBar = findViewById(R.id.progressBar);
         dimBackground = findViewById(R.id.dimBackground);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
         mAuth = FirebaseAuth.getInstance();
 
@@ -171,6 +174,34 @@ public class LoginViewActivity extends AppCompatActivity {
                             progressBar.setVisibility(View.GONE);
                             btnLoginEnter.setEnabled(true);
                             Toast.makeText(LoginViewActivity.this, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
+        // Forgot Password click
+        tvForgotPassword.setOnClickListener(v -> {
+            String email = edtEmail.getText().toString().trim();
+            if (email.isEmpty()) {
+                Toast.makeText(LoginViewActivity.this, "Please enter your email", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            dimBackground.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
+            btnLoginEnter.setEnabled(false);
+            btnRegisterLogin.setEnabled(false);
+            tvForgotPassword.setEnabled(false);
+
+            mAuth.sendPasswordResetEmail(email)
+                    .addOnCompleteListener(task -> {
+                        dimBackground.setVisibility(View.GONE);
+                        btnLoginEnter.setEnabled(true);
+                        btnRegisterLogin.setEnabled(true);
+                        tvForgotPassword.setEnabled(true);
+                        if (task.isSuccessful()) {
+                            Toast.makeText(LoginViewActivity.this, "Password reset email sent. Check your inbox.", Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(LoginViewActivity.this, "Failed to send reset email: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
         });
