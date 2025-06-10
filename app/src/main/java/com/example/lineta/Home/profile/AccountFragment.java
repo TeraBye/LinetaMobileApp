@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -87,7 +88,17 @@ public class AccountFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         String[] settings = {"Profile Settings", "Change Password", "Notification Settings"};
-        adapter = new SettingAdapter(Arrays.asList(settings));
+        adapter = new SettingAdapter(Arrays.asList(settings), setting -> {
+            if ("Change Password".equals(setting)) {
+                Fragment changePasswordFragment = ChangePasswordFragment.newInstance(null, null);
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.frame_layout, changePasswordFragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
         recyclerView.setAdapter(adapter);
 
         // Ánh xạ

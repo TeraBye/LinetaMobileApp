@@ -14,19 +14,29 @@ import com.example.lineta.R;
 
 import java.util.List;
 
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class SettingAdapter extends RecyclerView.Adapter<SettingAdapter.ViewHolder> {
 
-    private List<String> list;
+    List<String> list;
+    OnItemClickListener listener;
+    // Interface for click events
+    public interface OnItemClickListener {
+        void onItemClick(String setting);
+    }
 
-    public SettingAdapter(List<String> list) {
+    public SettingAdapter(List<String> list, OnItemClickListener listener) {
         this.list = list;
+        this.listener = listener;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.profile_item_settings, parent, false);
-        return new ViewHolder(view);
+        return new ViewHolder(view, listener);
     }
 
     @Override
@@ -43,13 +53,15 @@ public class SettingAdapter extends RecyclerView.Adapter<SettingAdapter.ViewHold
         TextView tvTitle;
         ImageView imgArrow;
 
-        public ViewHolder(@NonNull View itemView) {
+        public ViewHolder(@NonNull View itemView, OnItemClickListener listener) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             imgArrow = itemView.findViewById(R.id.icArrow);
             itemView.setOnClickListener(v -> {
                 v.startAnimation(AnimationUtils.loadAnimation(v.getContext(), R.anim.scale));
-                Toast.makeText(v.getContext(), tvTitle.getText().toString(), Toast.LENGTH_SHORT).show();
+                if (listener != null) {
+                    listener.onItemClick(tvTitle.getText().toString());
+                }
             });
 
         }
