@@ -1,8 +1,4 @@
-package com.example.lineta.Entity;
-
-import android.text.format.DateUtils;
-
-import java.util.concurrent.TimeUnit;
+package com.example.lineta.Entity.Conversation;
 
 public class Timestamp  {
     private Long seconds;

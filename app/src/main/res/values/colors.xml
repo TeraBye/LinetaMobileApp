@@ -28,4 +28,13 @@
     <color name="light_gray_message">#E2E2E2</color>
     <color name="light_blue_message">#BFD6F8</color>
     <color name="chat_background">#FFFFFF</color>
+
+    <!--    Follow btn-->
+    <color name="following_text_color">#666666</color>
+    <color name="follow_bg_color">#F44336</color>
+    <color name="following_bg_color">#E0E0E0</color>
+
+    <color name="colorPrimary">#2196F3</color>
+    <color name="colorPrimaryDark">#1976D2</color>
+    <color name="badge_red">#F44336</color>
 </resources>

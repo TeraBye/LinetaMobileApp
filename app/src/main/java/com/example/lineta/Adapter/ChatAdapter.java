@@ -9,8 +9,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
-import com.example.lineta.Entity.Message;
-import com.example.lineta.Entity.Timestamp;
+import com.example.lineta.Entity.Conversation.Message;
+import com.example.lineta.Entity.Conversation.Timestamp;
 import com.example.lineta.R;
 
 import java.util.List;
