@@ -1,5 +1,6 @@
 package com.example.lineta.Home;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -10,12 +11,14 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lineta.Adapter.PostAdapter;
 import com.example.lineta.Entity.Post;
 import com.example.lineta.R;
+import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.dto.response.ApiResponse;
 import com.example.lineta.service.ApiService;
 import com.example.lineta.service.client.ApiClient;
@@ -30,38 +33,58 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 public class HomeFragment extends Fragment {
     private RecyclerView recyclerView;
     private List<Post> list = new ArrayList<>();
     private PostAdapter adapter;
-    private View loadingOverlay; // Lớp phủ loading
+    private CurrentUserViewModel currentUserViewModel;
+    private View loadingOverlay;
     private ProgressBar progressBar;
     private int currentPage = 1;
     private int pageSize = 5;
+    private boolean isDataLoaded = false;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         recyclerView = view.findViewById(R.id.recyclerViewPost);
-        progressBar = view.findViewById(R.id.progressBar); // ProgressBar trong overlay
-        loadingOverlay = view.findViewById(R.id.loadingOverlay); // Lấy overlay từ layout
+        progressBar = view.findViewById(R.id.progressBar);
+        loadingOverlay = view.findViewById(R.id.loadingOverlay);
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new PostAdapter(requireContext(), list);
-        recyclerView.setAdapter(adapter);
 
+        currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
+        currentUserViewModel.fetchCurrentUserInfo();
+
+        currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
+            if (user == null) return;
+            adapter = new PostAdapter(requireContext(), list, user);
+            recyclerView.setAdapter(adapter);
+
+
+        });
+
+        // Cuộn đến cuối để load thêm posts (chỉ khi adapter không null)
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (!recyclerView.canScrollVertically(1)) {
+                if (!recyclerView.canScrollVertically(1) && adapter != null) {
                     loadMorePosts();
                 }
             }
         });
-
         fetchPosts(currentPage);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            currentPage = 1;
+            fetchPosts(currentPage);
+        });
+
         setupWebSocket();
 
         return view;
@@ -76,21 +99,32 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchPosts(int page) {
-        showLoading(true);
+        if (page == 1) {
+            swipeRefreshLayout.setRefreshing(true);
+            showLoading(false);
+        } else {
+            showLoading(true);
+        }
+
         ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
         Call<ApiResponse<List<Post>>> call = apiService.getPosts(page, pageSize);
 
         call.enqueue(new Callback<>() {
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onResponse(Call<ApiResponse<List<Post>>> call, Response<ApiResponse<List<Post>>> response) {
-                showLoading(false);
+                if (page == 1) swipeRefreshLayout.setRefreshing(false);
+                else showLoading(false);
+
                 if (response.isSuccessful() && response.body() != null) {
                     List<Post> posts = response.body().getResult();
                     if (page == 1) {
                         list.clear();
                     }
                     list.addAll(posts);
-                    adapter.notifyDataSetChanged();
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
                 } else {
                     Toast.makeText(getContext(), "Failed to load posts!", Toast.LENGTH_SHORT).show();
                 }
@@ -98,7 +132,9 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(Call<ApiResponse<List<Post>>> call, Throwable t) {
-                showLoading(false);
+                if (page == 1) swipeRefreshLayout.setRefreshing(false);
+                else showLoading(false);
+
                 Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -119,15 +155,23 @@ public class HomeFragment extends Fragment {
 
                 getActivity().runOnUiThread(() -> {
                     list.add(0, newPost);
-                    adapter.notifyItemInserted(0);
-                    recyclerView.scrollToPosition(0);
+                    if (adapter != null) {
+                        adapter.notifyItemInserted(0);
+                        if (isAdded() && !isDetached()) {  // Chỉ scroll nếu Fragment đang active
+                            recyclerView.scrollToPosition(0);
+                        }
+                    }
                 });
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         });
 
-        WebSocketManager.getInstance().connect("ws://localhost:9000/ws/websocket", "/topic/posts");
+        // Thay đổi URL websocket phù hợp với backend của bạn
+        WebSocketManager.getInstance().connect("ws://localhost:9000/ws/websocket", () -> {
+            WebSocketManager.getInstance().subscribe("/topic/posts");
+        });
+
     }
 
     private void showLoading(boolean show) {
@@ -136,9 +180,9 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        WebSocketManager.getInstance().disconnect();
-    }
+//    @Override
+//    public void onDestroyView() {
+//        super.onDestroyView();
+//        WebSocketManager.getInstance().disconnect();
+//    }
 }

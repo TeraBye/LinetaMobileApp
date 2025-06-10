@@ -5,13 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <!-- Avatar + Tên + Nội dung bình luận -->
+    <!-- Avatar + Nội dung + Nút trái tim -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <ImageView
+        <!-- Avatar -->
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imgAvatar"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -20,12 +21,14 @@
             app:shapeAppearanceOverlay="@style/roundedImageView"
             android:scaleType="centerCrop" />
 
+        <!-- Nội dung (Tên + ngày + comment + reply) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
 
+            <!-- Tên -->
             <TextView
                 android:id="@+id/tvFullName"
                 android:textStyle="bold"
@@ -34,13 +37,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
+            <!-- Ngày đăng -->
+            <TextView
+                android:id="@+id/tvCommentDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 giờ trước"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-light" />
+
+            <!-- Nội dung bình luận -->
             <TextView
                 android:id="@+id/tvCommentContent"
                 android:layout_width="wrap_content"
-                android:fontFamily="sans-serif-condensed"
                 android:layout_height="wrap_content"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_marginTop="4dp" />
 
+            <!-- Nút reply -->
             <TextView
                 android:id="@+id/tvLoadReply"
                 android:layout_width="wrap_content"
@@ -50,8 +67,18 @@
                 android:text="reply"
                 android:textColor="#A49F9F"
                 android:textStyle="italic" />
-
         </LinearLayout>
+
+        <!-- Nút Like -->
+        <ImageView
+            android:id="@+id/btnLikeComment"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_heart_outline"
+            app:tint="@color/red"
+            android:contentDescription="Like comment" />
     </LinearLayout>
 
     <!-- Danh sách reply comment -->

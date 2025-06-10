@@ -4,7 +4,7 @@ import android.text.format.DateUtils;
 
 import java.util.concurrent.TimeUnit;
 
-public class Timestamp {
+public class Timestamp  {
     private Long seconds;
     private Integer nanos;
 

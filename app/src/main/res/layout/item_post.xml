@@ -80,15 +80,15 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
-            android:fontFamily="@font/agbalumo"
-            android:text="Xin chào mọi người, tôi là Giáo Sư!"
-            android:textSize="12sp"
             android:clickable="true"
+            android:descendantFocusability="blocksDescendants"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:descendantFocusability="blocksDescendants"
+            android:fontFamily="@font/agbalumo"
+            android:text="Xin chào mọi người, tôi là Giáo Sư!"
+            android:textColor="#000000"
 
-            android:textColor="#000000" />
+            android:textSize="14sp" />
 
 
         <!-- Phần hiển thị media (Ảnh hoặc Video) -->
@@ -101,13 +101,14 @@
             <ImageView
                 android:id="@+id/imgPost"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_gravity="center"
-                android:scaleType="centerCrop"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
                 android:visibility="gone"
-                app:layout_constraintDimensionRatio="H,16:9"
-                app:layout_constraintWidth_percent="1"
-                tools:ignore="MissingConstraints" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
 
             <!-- Video bài viết -->
             <com.google.android.exoplayer2.ui.PlayerView
@@ -150,8 +151,8 @@
                     android:id="@+id/iconLike"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_heart_outline"
-                    app:tint="@color/black"
+                    android:src="@drawable/ic_heart_filled"
+                    app:tint="@color/red"
                     android:contentDescription="Love" />
 
                 <TextView
@@ -182,7 +183,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/baseline_insert_comment_24"
-                    app:tint="@color/black"
+                    app:tint="@color/blue_commment"
                     android:contentDescription="Comment" />
 
                 <TextView
@@ -213,7 +214,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/baseline_local_fire_department_24"
-                    app:tint="@color/black"
+                    app:tint="@color/royal_ant"
                     android:contentDescription="Share" />
 
                 <TextView

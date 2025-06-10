@@ -1,5 +1,6 @@
 package com.example.lineta.Home.modalPost;
 
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,16 +17,23 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.lineta.Entity.Post;
 import com.example.lineta.R;
+import com.example.lineta.dto.response.ApiResponse;
+import com.example.lineta.service.ApiService;
+import com.example.lineta.service.client.ApiClient;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.io.File;
@@ -34,8 +43,18 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.UUID;
 
-import com.example.lineta.ViewModel.UserViewModel;
+import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.Entity.User;
+import com.google.gson.Gson;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 
 public class CreatePostBottomSheet extends BottomSheetDialogFragment {
 
@@ -44,7 +63,7 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
     private String mimeType;
 
     Cloudinary cloudinary;
-    UserViewModel userViewModel;
+    CurrentUserViewModel currentUserViewModel;
 
     public static CreatePostBottomSheet newInstance() {
         return new CreatePostBottomSheet();
@@ -108,6 +127,20 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
         ImageView btnClose = view.findViewById(R.id.btnClose);
         ImageButton btnAttach = view.findViewById(R.id.btnAttach);
         ImageView previewImage = view.findViewById(R.id.previewImage);
+        ImageView imgAvatar = view.findViewById(R.id.imgAvatar);
+        TextView name = view.findViewById(R.id.tvFullName);
+
+        currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
+        currentUserViewModel.fetchCurrentUserInfo();
+        currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
+                    if (user == null) return;
+                    name.setText(user.getFullName());
+
+                    Glide.with(requireContext())
+                            .load(user.getProfilePicURL())
+                            .placeholder(R.drawable.main_logo)
+                            .into(imgAvatar);
+                });
 
         btnClose.setOnClickListener(v -> dismiss());
 
@@ -145,14 +178,16 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
                     try {
                         File file = createFileFromUri(selectedFileUri);
                         Map uploadResult = cloudinary.uploader().upload(file, ObjectUtils.emptyMap());
-
                         String mediaUrl = uploadResult.get("secure_url").toString();
 
                         requireActivity().runOnUiThread(() -> {
-                            sendPostToFirebase(content, mediaUrl);
-                            btnPost.setEnabled(true);
-                            btnPost.setText("Post");
-                            dismiss();
+                            sendPostToFirebase(content, mediaUrl, success -> {
+                                requireActivity().runOnUiThread(() -> {
+                                    btnPost.setEnabled(true);
+                                    btnPost.setText("Post");
+                                    if (success) dismiss();
+                                });
+                            });
                         });
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -163,9 +198,18 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
                     }
                 }).start();
             } else {
-                sendPostToFirebase(content, null);
+                sendPostToFirebase(content, null, success -> {
+                    requireActivity().runOnUiThread(() -> {
+                        btnPost.setEnabled(true);
+                        btnPost.setText("Post");
+                        if (success) {
+                            dismiss();
+                        }
+                    });
+                });
             }
         });
+
 
         return view;
     }
@@ -202,7 +246,65 @@ public class CreatePostBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    private void sendPostToFirebase(String content, String mediaUrl) {
-
+    private interface OnPostSentListener {
+        void onPostSent(boolean success);
     }
+
+    private void sendPostToFirebase(String content, String mediaUrl, OnPostSentListener listener) {
+        currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
+        currentUserViewModel.fetchCurrentUserInfo();
+        currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
+            if (user == null) return;
+
+            String picture = null;
+            String video = null;
+
+            if (mediaUrl != null) {
+                if (mimeType != null && mimeType.startsWith("image/")) {
+                    picture = mediaUrl;
+                } else if (mimeType != null && mimeType.startsWith("video/")) {
+                    video = mediaUrl;
+                }
+            }
+
+            String date2 = new SimpleDateFormat("ddMMyyyyHHmmss", Locale.getDefault()).format(new Date());
+
+            Post postRequest = Post.builder()
+                    .postId(user.getUsername() + date2)
+                    .username(user.getUsername())
+                    .fullName(user.getFullName())
+                    .profilePicURL(user.getProfilePicURL())
+                    .content(content)
+                    .picture(picture)
+                    .video(video)
+                    .numberOfLike(0)
+                    .date(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(new Date()))
+                    .uid(user.getUid())
+                    .build();
+
+            ApiService postService = ApiClient.getRetrofit().create(ApiService.class);
+            postService.createPost(postRequest).enqueue(new Callback<ApiResponse<Void>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                    if (response.isSuccessful()) {
+                        Log.d("CreatePost", "Post uploaded successfully");
+                        if (listener != null) listener.onPostSent(true);
+                    } else {
+                        Log.e("CreatePost", "Failed: " + response.code());
+                        if (listener != null) listener.onPostSent(false);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                    Log.e("CreatePost", "Error: " + t.getMessage());
+                    if (listener != null) listener.onPostSent(false);
+                }
+            });
+        });
+    }
+
+
+
+
 }

@@ -3,7 +3,6 @@ package com.example.lineta.Adapter;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,30 +14,42 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.lineta.Entity.Like;
 import com.example.lineta.Entity.Post;
+import com.example.lineta.Entity.User;
 import com.example.lineta.Home.interaction.CommentBottomSheetFragment;
 import com.example.lineta.R;
+import com.example.lineta.dto.response.ApiResponse;
+import com.example.lineta.service.ApiService;
+import com.example.lineta.service.client.ApiClient;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.material.imageview.ShapeableImageView;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     private final List<Post> posts;
     private final Context context;
+    private final User currentUser;
 
-    // Giới hạn số dòng caption khi chưa mở rộng
-    private static final int MAX_LINES_COLLAPSED = 3;
+    private static final int MAX_LINES_COLLAPSED = 5;
 
-    // Lưu trạng thái mở rộng caption cho từng item
-    private final SparseBooleanArray expandedPositions = new SparseBooleanArray();
+    private final HashMap<String, Boolean> expandedStates = new HashMap<>();
+    private final HashMap<String, Boolean> likedStates = new HashMap<>();
 
-    public PostAdapter(Context context, List<Post> posts) {
+    public PostAdapter(Context context, List<Post> posts, User currentUser) {
         this.context = context;
         this.posts = posts;
+        this.currentUser = currentUser;
     }
 
     @NonNull
@@ -51,42 +62,20 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         Post post = posts.get(position);
+        String postId = post.getPostId();
 
         holder.tvUsername.setText(post.getFullName());
         holder.tvCaption.setText(post.getContent());
 
-        // Kiểm tra trạng thái mở rộng của item hiện tại
-        boolean isExpanded = expandedPositions.get(position, false);
+        boolean isExpanded = expandedStates.getOrDefault(postId, false);
+        holder.tvCaption.setMaxLines(isExpanded ? Integer.MAX_VALUE : MAX_LINES_COLLAPSED);
+        holder.tvCaption.setEllipsize(isExpanded ? null : TextUtils.TruncateAt.END);
 
-        if (isExpanded) {
-            holder.tvCaption.setMaxLines(Integer.MAX_VALUE);
-            holder.tvCaption.setEllipsize(null);
-        } else {
-            holder.tvCaption.setMaxLines(MAX_LINES_COLLAPSED);
-            holder.tvCaption.setEllipsize(TextUtils.TruncateAt.END);
-        }
-
-        // Gán click listener cho caption
         holder.tvCaption.setOnClickListener(v -> {
-            boolean currentlyExpanded = expandedPositions.get(position, false);
-            if (currentlyExpanded) {
-                // Thu gọn
-                holder.tvCaption.setMaxLines(MAX_LINES_COLLAPSED);
-                holder.tvCaption.setEllipsize(TextUtils.TruncateAt.END);
-                expandedPositions.put(position, false);
-            } else {
-                // Mở rộng
-                holder.tvCaption.setMaxLines(Integer.MAX_VALUE);
-                holder.tvCaption.setEllipsize(null);
-                expandedPositions.put(position, true);
-            }
+            expandedStates.put(postId, !isExpanded);
+            notifyItemChanged(position);
         });
 
-        // Ẩn trước
-        holder.imgPost.setVisibility(View.GONE);
-        holder.playerView.setVisibility(View.GONE);
-
-        // Avatar
         if (post.getProfilePicURL() != null && !post.getProfilePicURL().isEmpty()) {
             holder.avatar.setVisibility(View.VISIBLE);
             Glide.with(context)
@@ -97,16 +86,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             holder.avatar.setVisibility(View.GONE);
         }
 
-        // Ảnh bài viết
         if (post.getPicture() != null && !post.getPicture().equalsIgnoreCase("null")) {
             holder.imgPost.setVisibility(View.VISIBLE);
             Glide.with(context)
                     .load(post.getPicture())
                     .placeholder(R.drawable.main_logo)
                     .into(holder.imgPost);
+        } else {
+            holder.imgPost.setVisibility(View.GONE);
         }
 
-        // Video bài viết
         String video = post.getVideo();
         if (video != null && !video.trim().isEmpty() && !video.equalsIgnoreCase("null")) {
             holder.imgPost.setVisibility(View.GONE);
@@ -128,16 +117,59 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             holder.playerView.setVisibility(View.GONE);
             if (holder.player != null) {
                 holder.player.release();
+                holder.playerView.setPlayer(null);
                 holder.player = null;
             }
         }
 
-        // Xử lý nút comment
         holder.btnComment.setOnClickListener(v -> {
             if (context instanceof FragmentActivity) {
-                CommentBottomSheetFragment fragment = CommentBottomSheetFragment.newInstance(post.getPostId());
+                CommentBottomSheetFragment fragment = CommentBottomSheetFragment.newInstance(postId);
                 fragment.show(((FragmentActivity) context).getSupportFragmentManager(), "CommentBottomSheet");
             }
+        });
+
+        // Reset icon like về outline trước khi gọi API
+//        holder.iconLike.setImageResource(R.drawable.ic_heart_outline);
+
+        // Gọi API check trạng thái like
+        checkLikeStatus(currentUser.getUsername(), postId, holder.iconLike);
+
+        // Chuyển đổi icon khi nhấn, không gọi API
+        holder.iconLike.setOnClickListener(v -> {
+            boolean currentlyLiked = likedStates.getOrDefault(postId, false);
+            boolean newState = !currentlyLiked;
+
+            likedStates.put(postId, newState);
+
+            Like likeRequest = Like.builder()
+                    .username(currentUser.getUsername())
+                    .postID(postId)
+                    .fullName(currentUser.getFullName())
+                    .profilePicURL(currentUser.getProfilePicURL())
+                    .tempContent(post.getContent())
+                    .build();
+
+            ApiService likeApi = ApiClient.getRetrofit().create(ApiService.class);
+            Call<ApiResponse<Void>> call = likeApi.toggleLike(likeRequest);
+
+            call.enqueue(new Callback<ApiResponse<Void>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String message = response.body().getMessage();
+                        Log.d("LIKE", "Success: " + message);
+                    } else {
+                        Log.e("LIKE", "Error: " + response.code());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                    Log.e("LIKE", "Failed: " + t.getMessage());
+                }
+            });
+            holder.iconLike.setImageResource(newState ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
         });
     }
 
@@ -146,6 +178,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         super.onViewRecycled(holder);
         if (holder.player != null) {
             holder.player.release();
+            holder.playerView.setPlayer(null);
             holder.player = null;
         }
     }
@@ -155,15 +188,35 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         return posts.size();
     }
 
+    private void checkLikeStatus(String username, String postId, ImageView iconLike) {
+        ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
+        apiService.checkIfLiked(username, postId).enqueue(new Callback<ApiResponse<Map<String, Boolean>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<Map<String, Boolean>>> call, Response<ApiResponse<Map<String, Boolean>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Boolean liked = response.body().getResult().get("liked");
+                    boolean isLiked = liked != null && liked;
+
+                    likedStates.put(postId, isLiked);
+                    iconLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+                } else {
+                    Log.e("checkLike", "Invalid response");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<Map<String, Boolean>>> call, Throwable t) {
+                Log.e("checkLike", "API failed: " + t.getMessage());
+            }
+        });
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ShapeableImageView avatar;
-        TextView tvUsername, tvCaption, btnComment;
-        ImageView imgPost;
+        TextView tvUsername, tvCaption, btnComment, tvLike;
+        ImageView imgPost, iconLike;
         PlayerView playerView;
         ExoPlayer player;
-
-        // Biến trạng thái caption đã mở rộng hay chưa
-        boolean isCaptionExpanded = false;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -173,7 +226,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             imgPost = itemView.findViewById(R.id.imgPost);
             playerView = itemView.findViewById(R.id.videoPost);
             btnComment = itemView.findViewById(R.id.btnComment);
+            iconLike = itemView.findViewById(R.id.iconLike);
+            tvLike = itemView.findViewById(R.id.tvLike);
             player = null;
         }
     }
+
+
 }

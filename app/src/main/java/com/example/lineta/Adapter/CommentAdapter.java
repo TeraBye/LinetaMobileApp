@@ -4,6 +4,8 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -12,12 +14,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.lineta.Entity.Comment;
+import com.example.lineta.Entity.CommentLike;
+import com.example.lineta.Entity.Like;
 import com.example.lineta.Entity.ReplyComment;
+import com.example.lineta.Entity.User;
 import com.example.lineta.R;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import android.util.Log;
 
@@ -28,6 +37,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.lineta.dto.response.ApiResponse;
+import com.example.lineta.service.ApiService;
 import com.example.lineta.service.CommentApi;
 import com.example.lineta.service.client.ApiClient;
 
@@ -43,14 +53,19 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     private List<Comment> commentList;
     private Context context;
 
+    private final HashMap<String, Boolean> likedStates = new HashMap<>();
+
+    private final User currentUser;
+
     // Dùng Map lưu trạng thái hiển thị reply theo vị trí hoặc commentId
     private final HashMap<String, Boolean> replyVisibilityMap = new HashMap<>();
     // Lưu reply đã load để không gọi lại API nhiều lần
     private final HashMap<String, List<ReplyComment>> loadedRepliesMap = new HashMap<>();
 
-    public CommentAdapter(Context context) {
+    public CommentAdapter(Context context, User currentUser) {
         this.context = context;
         this.commentList = new ArrayList<>();
+        this.currentUser = currentUser;
     }
 
     public void setComments(List<Comment> comments) {
@@ -67,6 +82,11 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         notifyItemRangeInserted(start, comments.size());
     }
 
+    public void addCommentAtTop(Comment comment) {
+        this.commentList.add(0, comment);
+        notifyItemInserted(0);
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -81,11 +101,51 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
         holder.tvFullName.setText(comment.getFullName());
         holder.tvContent.setText(comment.getContent());
+        holder.tvCommentDate.setText(comment.getDate());
 
         Glide.with(context)
                 .load(comment.getProfilePicURL())
                 .placeholder(R.drawable.main_logo)
                 .into(holder.imgAvatar);
+
+        checkLikeStatus(currentUser.getUsername(), commentId, holder.btnLikeComment);
+
+        holder.btnLikeComment.setOnClickListener(v -> {
+            boolean currentlyLiked = likedStates.getOrDefault(commentId, false);
+            boolean newState = !currentlyLiked;
+
+            likedStates.put(commentId, newState);
+
+            CommentLike likeCmtRequest = CommentLike.builder()
+                    .username(currentUser.getUsername())
+                    .commentId(commentId)
+                    .fullName(currentUser.getFullName())
+                    .profilePicURL(currentUser.getProfilePicURL())
+                    .tempContent(comment.getContent())
+                    .build();
+
+            ApiService likeApi = ApiClient.getRetrofit().create(ApiService.class);
+            Call<ApiResponse<Void>> call = likeApi.toggleLikeCmt(likeCmtRequest);
+
+            call.enqueue(new Callback<ApiResponse<Void>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String message = response.body().getMessage();
+                        Log.d("LIKE", "Success: " + message);
+                    } else {
+                        Log.e("LIKE", "Error: " + response.code());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                    Log.e("LIKE", "Failed: " + t.getMessage());
+                }
+            });
+            holder.btnLikeComment.setImageResource(newState ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        });
+
 
         // Thiết lập trạng thái hiển thị reply
         boolean isReplyVisible = replyVisibilityMap.getOrDefault(commentId, false);
@@ -155,10 +215,36 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         return commentList.size();
     }
 
+    private void checkLikeStatus(String username, String commentId, ImageView btnLikeComment) {
+        ApiService apiService = ApiClient.getRetrofit().create(ApiService.class);
+        apiService.checkIfLikedCmt(username, commentId).enqueue(new Callback<ApiResponse<Map<String, Boolean>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<Map<String, Boolean>>> call, Response<ApiResponse<Map<String, Boolean>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Boolean liked = response.body().getResult().get("liked");
+                    boolean isLiked = liked != null && liked;
+
+                    likedStates.put(commentId, isLiked);
+                    btnLikeComment.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+                } else {
+                    Log.e("checkLike", "Invalid response");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<Map<String, Boolean>>> call, Throwable t) {
+                Log.e("checkLike", "API failed: " + t.getMessage());
+            }
+        });
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvFullName, tvContent, tvLoadReply;
-        ImageView imgAvatar;
+        TextView tvFullName, tvContent, tvLoadReply, tvCommentDate;
+        ImageView imgAvatar, btnLikeComment;
         RecyclerView recyclerReply;
+
+        EditText inputComment ;
+        ImageView btnSend ;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -167,6 +253,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             imgAvatar = itemView.findViewById(R.id.imgAvatar);
             recyclerReply = itemView.findViewById(R.id.recyclerReply);
             tvLoadReply = itemView.findViewById(R.id.tvLoadReply);
+            inputComment = itemView.findViewById(R.id.inputComment);
+            btnSend = itemView.findViewById(R.id.btnSend);
+            btnLikeComment = itemView.findViewById(R.id.btnLikeComment);
+            tvCommentDate = itemView.findViewById(R.id.tvCommentDate);
         }
     }
 }

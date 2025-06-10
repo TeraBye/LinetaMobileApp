@@ -7,7 +7,7 @@
     android:paddingTop="4dp"
     android:paddingBottom="4dp">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imgAvatarReply"
         android:layout_width="32dp"
         android:layout_height="32dp"
