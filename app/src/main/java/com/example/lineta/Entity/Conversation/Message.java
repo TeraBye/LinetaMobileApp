@@ -1,4 +1,4 @@
-package com.example.lineta.Entity;
+package com.example.lineta.Entity.Conversation;
 
 import com.google.gson.annotations.SerializedName;
 
