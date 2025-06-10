@@ -1,4 +1,4 @@
-package com.example.lineta.Entity;
+package com.example.lineta.Entity.Conversation;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
@@ -18,16 +18,15 @@ public class Conversation {
     private String lastSender;
 
     @SerializedName("lastUpdate")
-    private Long lastUpdate; // Thay đổi thành Long để khớp với timestamp milliseconds
+    private Long lastUpdate;
 
     @SerializedName("unreadCount")
-    private Map<String, Long> unreadCount; // Thay đổi thành Long để khớp với backend
+    private Map<String, Long> unreadCount;
 
     @SerializedName("users")
-    private List<UserInfo> users; // Danh sách thông tin người dùng
+    private List<UserInfo> users;
 
-    // Class lồng để ánh xạ thông tin người dùng
-
+    // Getters và Setters
     public String getId() { return conversationId; }
     public void setId(String conversationId) { this.conversationId = conversationId; }
 
@@ -49,7 +48,7 @@ public class Conversation {
     public List<UserInfo> getUsers() { return users; }
     public void setUsers(List<UserInfo> users) { this.users = users; }
 
-    // Lấy tên người dùng khác (không phải người dùng hiện tại)
+    // Phương thức tiện ích
     public String getName(String currentUserId) {
         if (users != null) {
             for (UserInfo user : users) {
@@ -61,7 +60,6 @@ public class Conversation {
         return "Unknown";
     }
 
-    // Lấy avatar của người dùng khác
     public String getAvatarUrl(String currentUserId) {
         if (users != null) {
             for (UserInfo user : users) {
@@ -73,7 +71,6 @@ public class Conversation {
         return null;
     }
 
-    // Lấy số tin chưa đọc của người dùng hiện tại
     public long getUnreadCountForUser(String userId) {
         if (unreadCount != null && unreadCount.containsKey(userId)) {
             return unreadCount.get(userId);

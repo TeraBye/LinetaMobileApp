@@ -27,4 +27,5 @@
     <color name="light_gray_message">#E2E2E2</color>
     <color name="light_blue_message">#BFD6F8</color>
     <color name="chat_background">#FFFFFF</color>
+    <color name="badge_red">#F44336</color>
 </resources>

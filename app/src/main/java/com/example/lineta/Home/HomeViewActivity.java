@@ -1,9 +1,18 @@
 package com.example.lineta.Home;
 
+import static com.android.volley.VolleyLog.TAG;
+
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -32,12 +41,14 @@ import com.example.lineta.R;
 import com.example.lineta.Search.SearchActivity;
 import com.example.lineta.ViewModel.UserViewModel;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
+import com.example.lineta.service.client.WebSocketService;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
+public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     FirebaseAuth mAuth;
     ActivityHomeViewBinding binding;
     DrawerLayout drawerLayout;
@@ -45,6 +56,11 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     UserViewModel userViewModel;
     private String uid;
     private String token;
+
+    private WebSocketService webSocketService;
+    private boolean isServiceBound;
+    private BroadcastReceiver unreadCountReceiver;
+    private BadgeDrawable badge; // Khai báo badge làm biến instance
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -72,7 +88,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         // Initialize ViewModel
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
-
         // Handle intent from SearchActivity
         Intent intent = getIntent();
         if (intent != null && intent.getBooleanExtra("navigate_to_profile", false)) {
@@ -91,7 +106,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             }
         }
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
             window.setStatusBarColor(this.getResources().getColor(R.color.white));
         }
@@ -101,10 +116,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-
-
-
-        //getSupportActionBar().hide(); // Ẩn tên App mặc định
 
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_drawer);
@@ -119,7 +130,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             replaceFragment(new HomeFragment());
         }
 
-
         binding.bottomNavigationView.setBackground(null);
 
         FloatingActionButton fab = findViewById(R.id.fabu); // chắc chắn trong layout của bạn có fab này
@@ -127,6 +137,25 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             CreatePostBottomSheet bottomSheet = CreatePostBottomSheet.newInstance();
             bottomSheet.show(getSupportFragmentManager(), "CreatePostBottomSheet");
         });
+
+        // Khởi động WebSocketService để nhận tổng số tin nhắn chưa đọc
+        Intent intentService = new Intent(this, WebSocketService.class);
+        intentService.putExtra("userId", uid);
+        startService(intentService);
+        bindService(intentService, serviceConnection, Context.BIND_AUTO_CREATE);
+
+        // Đăng ký receiver để cập nhật tổng số tin nhắn chưa đọc
+        unreadCountReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("com.example.lineta.UNREAD_COUNT_UPDATE".equals(intent.getAction())) {
+                    long totalUnread = intent.getLongExtra("totalUnread", 0);
+                    updateUnreadBadge(totalUnread);
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter("com.example.lineta.UNREAD_COUNT_UPDATE");
+        registerReceiver(unreadCountReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
@@ -147,6 +176,13 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             }
             return true;
         });
+
+        // Cập nhật badge ban đầu
+        MenuItem messageItem = binding.bottomNavigationView.getMenu().findItem(R.id.message);
+        if (messageItem != null) {
+            badge = binding.bottomNavigationView.getOrCreateBadge(R.id.message);
+            badge.setVisible(false);
+        }
     }
 
     private void updateHeader(User user) {
@@ -163,12 +199,13 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 .into(avatarImage);
     }
 
-    private void replaceFragment(Fragment fragment){
+    private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout,fragment);
+        fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.commit();
     }
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.drawer_account) {
@@ -196,4 +233,45 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
     }
 
+    private void updateUnreadBadge(long totalUnread) {
+        if (badge != null) {
+            if (totalUnread > 0) {
+                badge.setVisible(true);
+                badge.setNumber((int) totalUnread); // Chuyển long sang int
+            } else {
+                badge.setVisible(false);
+            }
+        }
+    }
+
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            WebSocketService.WebSocketBinder binder = (WebSocketService.WebSocketBinder) service;
+            webSocketService = binder.getService();
+            isServiceBound = true;
+            Log.d(TAG, "Service connected, updating initial unread count");
+            if (webSocketService != null) {
+                long initialUnread = webSocketService.getTotalUnreadCount(); // Giả định có phương thức này
+                updateUnreadBadge(initialUnread);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isServiceBound = false;
+            Log.d(TAG, "Service disconnected");
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isServiceBound) {
+            unbindService(serviceConnection);
+        }
+        if (unreadCountReceiver != null) {
+            unregisterReceiver(unreadCountReceiver);
+        }
+    }
 }
