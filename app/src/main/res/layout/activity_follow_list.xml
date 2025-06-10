@@ -17,9 +17,18 @@
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:titleTextColor="?android:attr/textColorPrimary" />
 
+    <!-- Tab Layout for Followers/Following -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        app:tabIndicatorColor="@color/royal_ant"
+        app:tabSelectedTextColor="@color/royal_ant"
+        app:tabTextColor="?android:attr/textColorSecondary" />
+
     <!-- Search Bar -->
     <LinearLayout
-        android:layout_marginTop="40dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"

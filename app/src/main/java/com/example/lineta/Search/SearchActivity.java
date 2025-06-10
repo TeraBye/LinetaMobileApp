@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lineta.Adapter.UserSearchAdapter;
-import com.example.lineta.Home.AccountFragment;
 import com.example.lineta.Home.HomeViewActivity;
 import com.example.lineta.R;
 import com.example.lineta.dto.response.ApiResponse;

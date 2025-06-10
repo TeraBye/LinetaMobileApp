@@ -105,7 +105,7 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Vi
             // Nhấn vào item lịch sử để tìm kiếm lại
             holder.itemView.setOnClickListener(v -> {
                 if (historyItemClickListener != null) {
-                    historyItemClickListener.onHistoryItemClick(historyItem.getUsername());
+                    historyItemClickListener.onHistoryItemClick(historyItem.getUid());
                 }
             });
         } else {
@@ -123,11 +123,10 @@ public class UserSearchAdapter extends RecyclerView.Adapter<UserSearchAdapter.Vi
             // Thêm lịch sử khi nhấn vào kết quả tìm kiếm
             holder.itemView.setOnClickListener(v -> {
                 addSearchHistory(userSearchResponse.getUid());
+                if (itemClickListener != null) {
+                    itemClickListener.onItemClick(userSearchResponse.getUid());
+                }
             });
-
-            if (itemClickListener != null) {
-                itemClickListener.onItemClick(userSearchResponse.getUid());
-            }
         }
     }
 
