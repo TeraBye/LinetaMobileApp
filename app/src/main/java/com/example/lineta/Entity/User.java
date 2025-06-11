@@ -2,6 +2,8 @@ package com.example.lineta.Entity;
 
 import com.google.firebase.Timestamp;
 
+import java.io.Serializable;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +18,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @Builder
-public class User {
+public class User implements Serializable {
     String uid;
     String username;
     String email;

@@ -151,6 +151,7 @@ public class AccountFragment extends Fragment {
                 tvPostNum.setOnClickListener(v -> {
                     Intent intent = new Intent(requireContext(), UserPostListActivity.class);
 //                    intent.putExtra("user_id", userId);
+//                    intent.putExtra("user", user);
                     intent.putExtra("username", user.getUsername());
                     startActivity(intent);
                 });
@@ -188,6 +189,7 @@ public class AccountFragment extends Fragment {
                 tvPostNum.setOnClickListener(v -> {
                     Intent intent = new Intent(requireContext(), UserPostListActivity.class);
 //                    intent.putExtra("user_id", userId);
+//                    intent.putExtra("user", user);
                     intent.putExtra("username", user.getUsername());
                     startActivity(intent);
                 });
