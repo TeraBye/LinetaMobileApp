@@ -86,15 +86,15 @@
                 android:id="@+id/tvForgotPassword"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
                 android:text="Forgot Password?"
                 android:textColor="@color/colorPrimary"
                 android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_gravity="end"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground" />
+                android:textStyle="bold" />
 
             <CheckBox
                 android:id="@+id/chkSaveCredentials"
@@ -104,13 +104,14 @@
                 android:text="Save email and password"
                 android:textColor="#101010"
                 android:checked="true" />
+
             <Button
                 android:id="@+id/btnLoginEnter"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:backgroundTint="#FF9800"
-                android:fontFamily="@font/sigmar"
+                android:fontFamily="@font/shrikhand"
                 android:text="Login"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -129,6 +130,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:backgroundTint="#FF5722"
+                android:fontFamily="@font/shrikhand"
                 android:text="Google"
                 android:textStyle="bold"
                 app:cornerRadius="20dp" />
@@ -138,6 +140,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:backgroundTint="#8BC34A"
+                android:fontFamily="@font/shrikhand"
                 android:text="Register"
                 android:textStyle="bold"
                 app:cornerRadius="20dp" />

@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="8dp">
 
@@ -10,10 +11,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/contact_avatar"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/RoundedAvatar"
             android:contentDescription="Contact Avatar"
             android:src="@drawable/default_avatar" />
 
@@ -28,14 +31,18 @@
                 android:id="@+id/name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
+                android:fontFamily="@font/agbalumo"
+                android:text="Thien QiuBoo"
+                android:textSize="20sp"
                 android:textStyle="normal" />
 
             <TextView
                 android:id="@+id/lastMessage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:fontFamily="@font/lobster"
+                android:text="aloaloalo"
+                android:textSize="15sp"
                 android:textStyle="normal" />
         </LinearLayout>
 
@@ -54,6 +61,9 @@
         android:id="@+id/last_update_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="12sp"
-        android:textColor="#757575" />
+        android:fontFamily="@font/lobster"
+        android:text="11:60 12/12/2025"
+        android:gravity="right"
+        android:textColor="#757575"
+        android:textSize="12sp" />
 </LinearLayout>
