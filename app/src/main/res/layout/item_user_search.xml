@@ -35,22 +35,24 @@
             android:id="@+id/tvUsername"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/agbalumo"
+            android:maxLines="1"
+            android:textColor="@color/black"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="@color/black"
-            android:maxLines="1"
-            android:ellipsize="end"
             tools:text="terabye" />
 
         <TextView
             android:id="@+id/tvFullName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="@color/gray_dark"
             android:layout_marginTop="2dp"
-            android:maxLines="1"
             android:ellipsize="end"
+            android:fontFamily="@font/lobster"
+            android:maxLines="1"
+            android:textColor="@color/gray_dark"
+            android:textSize="14sp"
             tools:text="Luân Giáo Sư" />
 
     </LinearLayout>

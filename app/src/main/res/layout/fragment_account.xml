@@ -70,10 +70,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:backgroundTint="@color/blue_accent"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
                     android:elevation="2dp"
-                    android:text="Follow" />
+                    android:fontFamily="@font/shrikhand"
+                    android:text="Follow"
+                    android:textSize="12dp"
+                    android:textStyle="bold" />
 
 <!--                Tạo button trong framelayout để sau này có thể thêm nút message vào đây-->
 
