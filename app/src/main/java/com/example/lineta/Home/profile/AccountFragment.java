@@ -139,14 +139,27 @@ public class AccountFragment extends Fragment {
                 tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
                 tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
 
+
+
                 if (user.getProfilePicURL() != null) {
                     Glide.with(requireContext())
                             .load(user.getProfilePicURL())
                             .placeholder(R.drawable.default_avatar)
                             .into(avatar);
                 }
+
+                tvPostNum.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(), UserPostListActivity.class);
+//                    intent.putExtra("user_id", userId);
+                    intent.putExtra("username", user.getUsername());
+                    startActivity(intent);
+                });
+                userViewModel.fetchPostsByUser(user.getUsername(), 0, 50);
             });
 
+            userViewModel.getPostCountLiveData().observe(getViewLifecycleOwner(), count -> {
+                tvPostNum.setText(String.valueOf(count));
+            });
             // Observe errors
             userViewModel.getErrorLiveData().observe(getViewLifecycleOwner(), error -> {
 //            loadingProgressBar.setVisibility(View.GONE);
@@ -171,6 +184,17 @@ public class AccountFragment extends Fragment {
                             .placeholder(R.drawable.default_avatar)
                             .into(avatar);
                 }
+
+                tvPostNum.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(), UserPostListActivity.class);
+//                    intent.putExtra("user_id", userId);
+                    intent.putExtra("username", user.getUsername());
+                    startActivity(intent);
+                });
+                currentUserViewModel.fetchPostsByUser(user.getUsername(), 0, 50);
+            });
+            currentUserViewModel.getPostCountLiveData().observe(getViewLifecycleOwner(), count -> {
+                tvPostNum.setText(String.valueOf(count));
             });
 
             // Observe errors
@@ -182,7 +206,6 @@ public class AccountFragment extends Fragment {
             });
 
         }
-
         return view;
 
     }

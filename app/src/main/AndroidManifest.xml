@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <application
@@ -18,6 +19,9 @@
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.Lineta"
         tools:targetApi="31">
+        <activity
+            android:name=".Home.profile.UserPostListActivity"
+            android:exported="false" />
         <activity
             android:name=".Home.profile.FollowListActivity"
             android:exported="false" />
