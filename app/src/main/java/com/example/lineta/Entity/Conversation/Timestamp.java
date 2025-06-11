@@ -1,6 +1,6 @@
 package com.example.lineta.Entity.Conversation;
 
-public class Timestamp {
+public class Timestamp  {
     private Long seconds;
     private Integer nanos;
 

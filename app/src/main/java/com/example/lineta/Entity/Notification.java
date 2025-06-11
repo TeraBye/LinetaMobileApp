@@ -1,5 +1,7 @@
 package com.example.lineta.Entity;
 
+import java.sql.Timestamp;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,18 +16,13 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @Builder
-public class Post {
+public class Notification {
+    private String receiverUsername;
+    private  String senderUsername;
+    private String content;
+    private String type;
     private String postId;
-    private String fullName;  // Tên tác giả
-    private String content;   // Nội dung bài viết
-    private String picture;   // URL ảnh (có thể là null)
-    private String video;
+    private FirebaseTimestamp timestamp;
+    private boolean read;
     private String profilePicURL;
-    private int numberOfLike;
-    private String username;
-    private String date;
-    private  String uid;
-
-
-
 }
