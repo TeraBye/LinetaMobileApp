@@ -1,9 +1,11 @@
 package com.example.lineta.Home;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,6 +19,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.lineta.Adapter.FriendAdapter;
+import com.example.lineta.Home.profile.AccountFragment;
 import com.example.lineta.Home.profile.FollowListActivity;
 import com.example.lineta.R;
 import com.example.lineta.dto.response.ApiResponse;
@@ -59,6 +62,16 @@ public class FriendsFragment extends Fragment {
         friendAdapter = new FriendAdapter(userList, requireContext());
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(friendAdapter);
+
+        friendAdapter.setOnItemClickListener(userId -> {
+            Fragment accountFragment = AccountFragment.newInstance(userId);
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .replace(R.id.frame_layout, accountFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         setupSearch();
         setupRecyclerViewScrollListener();

@@ -1,15 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/notificationsLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F44336"
-    tools:context=".Home.NotificationFragment">
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:padding="16dp">
 
-    <!-- TODO: Update blank fragment layout -->
+    <!-- Tiêu đề -->
     <TextView
+        android:id="@+id/tvTitle"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:fontFamily="@font/agbalumo"
+        android:gravity="center"
+        android:paddingBottom="8dp"
+        android:text="Notifications"
+        android:textColor="#000000"
+        android:textSize="22sp"
+        android:textStyle="bold" />
 
-</FrameLayout>
+    <!-- Đường gạch ngang -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#DDDDDD"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Danh sách thông báo -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp" />
+</LinearLayout>
