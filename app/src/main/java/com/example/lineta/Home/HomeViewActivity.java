@@ -150,7 +150,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             if (isShowingProfile) {
                 isShowingProfile = false; // Cho phép thay đổi fragment sau lần đầu
-                return false; // Ngăn bottom navigation ghi đè ngay lập tức
+                return false; // Ngăn bottom naviga
+                // tion ghi đè ngay lập tức
             }
 
             Fragment selectedFragment = null;
