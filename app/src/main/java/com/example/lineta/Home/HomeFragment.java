@@ -3,6 +3,7 @@ package com.example.lineta.Home;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,6 +47,8 @@ public class HomeFragment extends Fragment {
     private int pageSize = 5;
     private boolean isDataLoaded = false;
     private SwipeRefreshLayout swipeRefreshLayout;
+
+    private WebSocketManager postSocketManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -141,7 +144,13 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupWebSocket() {
-        WebSocketManager.getInstance().setListener(jsonObject -> {
+        if (postSocketManager != null) {
+            return; // Đã kết nối rồi, không kết nối lại
+        }
+        String wsUrl = "ws://localhost:9000/ws/websocket"; // hoặc lấy từ config
+
+        postSocketManager = new WebSocketManager(wsUrl);
+        postSocketManager.setListener(jsonObject -> {
             try {
                 Post newPost = new Post();
                 newPost.setPostId(jsonObject.getString("postId"));
@@ -157,7 +166,8 @@ public class HomeFragment extends Fragment {
                     list.add(0, newPost);
                     if (adapter != null) {
                         adapter.notifyItemInserted(0);
-                        if (isAdded() && !isDetached()) {  // Chỉ scroll nếu Fragment đang active
+                        Log.d("WebSocket: post",newPost.getContent());
+                        if (isAdded() && !isDetached()) {
                             recyclerView.scrollToPosition(0);
                         }
                     }
@@ -167,11 +177,9 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Thay đổi URL websocket phù hợp với backend của bạn
-        WebSocketManager.getInstance().connect("ws://localhost:9000/ws/websocket", () -> {
-            WebSocketManager.getInstance().subscribe("/topic/posts");
+        postSocketManager.connect(() -> {
+            postSocketManager.subscribe("/topic/posts");
         });
-
     }
 
     private void showLoading(boolean show) {

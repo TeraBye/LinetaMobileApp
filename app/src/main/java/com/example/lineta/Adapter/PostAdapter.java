@@ -129,8 +129,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             }
         });
 
-        // Reset icon like về outline trước khi gọi API
-//        holder.iconLike.setImageResource(R.drawable.ic_heart_outline);
 
         // Gọi API check trạng thái like
         checkLikeStatus(currentUser.getUsername(), postId, holder.iconLike);

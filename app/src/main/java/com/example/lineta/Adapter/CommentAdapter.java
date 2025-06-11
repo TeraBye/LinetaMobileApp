@@ -4,9 +4,11 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -180,6 +182,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                 }
             }
         });
+
+
+
+
     }
 
     private void loadReplyComments(String commentId, ViewHolder holder, int position) {
@@ -239,12 +245,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvFullName, tvContent, tvLoadReply, tvCommentDate;
+        TextView tvFullName, tvContent, tvLoadReply, tvCommentDate, tvReply;
         ImageView imgAvatar, btnLikeComment;
         RecyclerView recyclerReply;
 
         EditText inputComment ;
-        ImageView btnSend ;
+        ImageView btnSend, btnSendRep;
+
+        LinearLayout layoutReplyInput;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -253,10 +261,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             imgAvatar = itemView.findViewById(R.id.imgAvatar);
             recyclerReply = itemView.findViewById(R.id.recyclerReply);
             tvLoadReply = itemView.findViewById(R.id.tvLoadReply);
-            inputComment = itemView.findViewById(R.id.inputComment);
+
             btnSend = itemView.findViewById(R.id.btnSend);
             btnLikeComment = itemView.findViewById(R.id.btnLikeComment);
             tvCommentDate = itemView.findViewById(R.id.tvCommentDate);
+            tvReply = itemView.findViewById(R.id.tvReply);
+
         }
     }
 }
