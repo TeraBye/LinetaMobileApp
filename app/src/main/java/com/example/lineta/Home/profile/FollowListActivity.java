@@ -8,6 +8,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -54,6 +55,7 @@ public class FollowListActivity extends AppCompatActivity {
     final int PAGE_SIZE = 5;
     boolean isLoading = false;
     boolean isLastPage = false;
+    Typeface typeface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +77,7 @@ public class FollowListActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         searchEditText = findViewById(R.id.searchEditText);
         TabLayout tabLayout = findViewById(R.id.tabLayout);
+        typeface = ResourcesCompat.getFont(this, R.font.agbalumo);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -90,6 +93,26 @@ public class FollowListActivity extends AppCompatActivity {
         // Setup tabs
         tabLayout.addTab(tabLayout.newTab().setText("Followers"));
         tabLayout.addTab(tabLayout.newTab().setText("Following"));
+
+        for (int i = 0; i < tabLayout.getTabCount(); i++) {
+            TabLayout.Tab tab = tabLayout.getTabAt(i);
+            if (tab != null && tab.getCustomView() != null) {
+                TextView tabTextView = tab.getCustomView().findViewById(android.R.id.text1);
+                if (tabTextView != null) {
+                    tabTextView.setTypeface(typeface);
+                }
+            } else {
+                // Nếu không có custom view, tạo mới
+                TextView tabTextView = new TextView(this);
+                tabTextView.setText(tab.getText());
+                tabTextView.setTypeface(typeface);
+                if (tabTextView.isSelected())
+                    tabTextView.setTextColor(getResources().getColor(R.color.royal_ant, getTheme()));
+                else
+                    tabTextView.setTextColor(getResources().getColor(R.color.black, getTheme()));
+                tab.setCustomView(tabTextView);
+            }
+        }
 
         // Select the appropriate tab based on the type
         if ("following".equals(listType)) {
@@ -133,10 +156,11 @@ public class FollowListActivity extends AppCompatActivity {
 
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
+//        toolbar.setTitleTextAppearance(this, R.style.Toolbart);
         setSupportActionBar(toolbar);
 
         Typeface typeface = ResourcesCompat.getFont(this, R.font.agbalumo);
-//        toolbar.setTitleTextAppearance(this, R.style.Toolbar);
+        toolbar.setTitleTextAppearance(this, R.style.ToolbarTitleText);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
