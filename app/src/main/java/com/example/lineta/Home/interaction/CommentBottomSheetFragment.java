@@ -88,6 +88,7 @@ public class CommentBottomSheetFragment extends BottomSheetDialogFragment {
         recyclerComments.setLayoutManager(new LinearLayoutManager(getContext()));
 
         inputComment = view.findViewById(R.id.inputComment);
+
         btnSend = view. findViewById(R.id.btnSend);
 
         currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
