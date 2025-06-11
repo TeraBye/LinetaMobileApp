@@ -205,8 +205,17 @@ public class CommentBottomSheetFragment extends BottomSheetDialogFragment {
             }
         });
     }
+    private WebSocketManager commentSocketManager;
+
     private void setupWebSocket() {
-        WebSocketManager.getInstance().setListener(jsonObject -> {
+        if (commentSocketManager != null) {
+            return; // Đã kết nối rồi, không kết nối lại
+        }
+        String url = "ws://localhost:9000/ws/websocket"; // Socket của comment
+        String topic = "/topic/comments/" + postId;
+
+        commentSocketManager = new WebSocketManager(url);
+        commentSocketManager.setListener(jsonObject -> {
             try {
                 Comment commentResponse = Comment.builder()
                         .commentId(jsonObject.getString("commentId"))
@@ -219,14 +228,14 @@ public class CommentBottomSheetFragment extends BottomSheetDialogFragment {
                         .numberOfLike(jsonObject.getInt("numberOfLike"))
                         .build();
 
-
                 if (getActivity() == null) return;
 
                 getActivity().runOnUiThread(() -> {
                     if (comments == null) return;
                     if (adapter != null) {
-                        adapter.addCommentAtTop(commentResponse);  // Thay vì comments.add(0)
+                        adapter.addCommentAtTop(commentResponse);
                         recyclerComments.scrollToPosition(0);
+                        Log.d("WebSocket: cmt",commentResponse.getContent());
                     }
                 });
 
@@ -235,13 +244,9 @@ public class CommentBottomSheetFragment extends BottomSheetDialogFragment {
             }
         });
 
-        // Thay đổi URL websocket phù hợp với backend của bạn
-//        WebSocketManager.getInstance().connect("ws://localhost:9000/ws/websocket", () -> {
-//            WebSocketManager.getInstance().subscribe("/topic/comments/" + postId);
-//        });
-
-        WebSocketManager.getInstance().subscribe("/topic/comments/" + postId);
-
+        commentSocketManager.connect(() -> {
+            commentSocketManager.subscribe(topic);
+        });
     }
 
 
