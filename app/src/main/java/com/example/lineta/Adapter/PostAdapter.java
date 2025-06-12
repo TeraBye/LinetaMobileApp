@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Setter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -39,7 +40,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     private final List<Post> posts;
     private final Context context;
-    private final User currentUser;
+    @Setter
+    private  User currentUser;
 
     private static final int MAX_LINES_COLLAPSED = 5;
 
@@ -180,6 +182,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             holder.player = null;
         }
     }
+
 
     @Override
     public int getItemCount() {
