@@ -115,9 +115,9 @@ public class WebSocketService extends Service {
 
     private void updateTotalUnreadCount() {
         totalUnreadCount = conversationUpdates.values().stream()
-                .filter(dto -> dto.getUnreadCount() != null)
+                .filter(dto -> dto.getUnreadCount() != null && userId != null)
                 .flatMap(dto -> dto.getUnreadCount().entrySet().stream())
-                .filter(entry -> entry.getKey() != null && !entry.getKey().isEmpty()) // Loại bỏ key null hoặc rỗng
+                .filter(entry -> userId.equals(entry.getKey())) // Chỉ lấy unreadCount của userId hiện tại
                 .mapToLong(Map.Entry::getValue)
                 .sum();
         broadcastUnreadCount(totalUnreadCount);
@@ -178,6 +178,22 @@ public class WebSocketService extends Service {
         }
         Log.w(TAG, "userId is null, using fallback");
         return "unknown_user"; // Fallback
+    }
+
+    // Thêm broadcast sau khi gửi update
+    public void sendConversationUpdateWithBroadcast(Map<String, Object> updateData) {
+        sendConversationUpdate(updateData); // Gửi WebSocket update
+        // Broadcast ngay lập tức để đồng bộ
+        if (updateData.get("unreadCount") instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Long> unreadCountMap = (Map<String, Long>) updateData.get("unreadCount");
+            long newTotalUnread = unreadCountMap.entrySet().stream()
+                    .filter(entry -> entry.getKey() != null && !entry.getKey().isEmpty())
+                    .mapToLong(Map.Entry::getValue)
+                    .sum();
+            broadcastUnreadCount(newTotalUnread); // Cập nhật ngay lập tức
+            Log.d(TAG, "Broadcasted new totalUnread after update: " + newTotalUnread);
+        }
     }
 
     @Override

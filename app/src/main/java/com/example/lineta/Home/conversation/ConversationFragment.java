@@ -366,11 +366,14 @@ public class ConversationFragment extends Fragment {
                         updateData.put("conversationId", conversationId);
                         updateData.put("unreadCount", new HashMap<String, Long>() {{ put(userId, 0L); }});
                         updateData.put("lastUpdate", String.valueOf(System.currentTimeMillis()));
-                        webSocketService.sendConversationUpdate(updateData);
-                        Log.d(TAG, "Sent WebSocket update for conversationId: " + conversationId);
+                        webSocketService.sendConversationUpdateWithBroadcast(updateData); // Sử dụng phương thức mới
+                        Log.d(TAG, "Sent WebSocket update with broadcast for conversationId: " + conversationId);
                     } else {
                         Log.w(TAG, "webSocketService is null, cannot send WebSocket update");
                     }
+
+                    // Đồng bộ lại dữ liệu từ backend
+                    fetchConversations();
                 } else {
                     Log.e(TAG, "Failed to mark as read: " + response.code() + ", Message: " + response.message());
                 }
@@ -382,7 +385,6 @@ public class ConversationFragment extends Fragment {
             }
         });
     }
-
     private String getContactName(Map<String, Object> conversation) {
         List<UserInfo> users = (List<UserInfo>) conversation.get("users");
         if (users != null) {

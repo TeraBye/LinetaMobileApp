@@ -2,6 +2,7 @@ package com.example.lineta.service;
 
 import com.example.lineta.Entity.Conversation.Conversation;
 import com.example.lineta.Entity.Conversation.Message;
+import com.example.lineta.dto.response.UnreadCountResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
 import retrofit2.http.PartMap;
+import retrofit2.http.Query;
 
 public interface ApiConversation {
     @GET("api/message/get-all-contact")
@@ -33,4 +35,7 @@ public interface ApiConversation {
 
     @POST("api/message/update-unread")
     Call<Void> updateUnread(@Body Map<String, String> requestData);
+
+    @GET("api/message/unread-count")
+    Call<UnreadCountResponse> getUnreadCount(@Query("userId") String userId);
 }
