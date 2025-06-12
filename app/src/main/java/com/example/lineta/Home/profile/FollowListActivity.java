@@ -96,21 +96,19 @@ public class FollowListActivity extends AppCompatActivity {
 
         for (int i = 0; i < tabLayout.getTabCount(); i++) {
             TabLayout.Tab tab = tabLayout.getTabAt(i);
-            if (tab != null && tab.getCustomView() != null) {
-                TextView tabTextView = tab.getCustomView().findViewById(android.R.id.text1);
-                if (tabTextView != null) {
-                    tabTextView.setTypeface(typeface);
-                }
-            } else {
-                // Nếu không có custom view, tạo mới
+            if (tab != null) {
                 TextView tabTextView = new TextView(this);
                 tabTextView.setText(tab.getText());
                 tabTextView.setTypeface(typeface);
-                if (tabTextView.isSelected())
-                    tabTextView.setTextColor(getResources().getColor(R.color.royal_ant, getTheme()));
-                else
-                    tabTextView.setTextColor(getResources().getColor(R.color.black, getTheme()));
+                tabTextView.setTextColor(getResources().getColor(R.color.black, getTheme()));
                 tab.setCustomView(tabTextView);
+
+                // Kiểm tra và set màu cho tab được chọn mặc định
+                if (i == 0 && "followers".equals(listType)) {
+                    tabTextView.setTextColor(getResources().getColor(R.color.royal_ant, getTheme()));
+                } else if (i == 1 && "following".equals(listType)) {
+                    tabTextView.setTextColor(getResources().getColor(R.color.royal_ant, getTheme()));
+                }
             }
         }
 
@@ -125,6 +123,11 @@ public class FollowListActivity extends AppCompatActivity {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                // Lấy TextView của tab được chọn
+                TextView tabTextView = (TextView) tab.getCustomView();
+                if (tabTextView != null) {
+                    tabTextView.setTextColor(getResources().getColor(R.color.royal_ant, getTheme()));
+                }
                 int position = tab.getPosition();
                 if (position == 0) {
                     listType = "followers";
@@ -133,12 +136,15 @@ public class FollowListActivity extends AppCompatActivity {
                     listType = "following";
                     setTitle("Following");
                 }
-                Log.d("FollowListActivity", "Tab selected: " + listType + ", userId=" + userId);
                 loadData();
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
+                TextView tabTextView = (TextView) tab.getCustomView();
+                if (tabTextView != null) {
+                    tabTextView.setTextColor(getResources().getColor(R.color.black, getTheme()));
+                }
             }
 
             @Override
