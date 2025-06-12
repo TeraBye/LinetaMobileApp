@@ -44,6 +44,8 @@ import com.example.lineta.R;
 import com.example.lineta.Search.SearchActivity;
 import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.ViewModel.UserViewModel;
+import com.example.lineta.config.RawWebSocketManager;
+import com.example.lineta.config.WebSocketManager;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
 import com.example.lineta.service.client.WebSocketService;
 import com.google.android.material.badge.BadgeDrawable;
@@ -51,6 +53,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import org.json.JSONException;
+
+import ua.naiksoftware.stomp.Stomp;
+import ua.naiksoftware.stomp.StompClient;
 
 public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     FirebaseAuth mAuth;
@@ -67,6 +74,11 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     private boolean isServiceBound;
     private BroadcastReceiver unreadCountReceiver;
     private BadgeDrawable badge; // Khai báo badge làm biến instance
+    private StompClient stompClient;
+    private BadgeDrawable notificationBadge;
+    private int notificationUnreadCount = 0;
+
+
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -101,6 +113,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        //trien khai thong bao
 
 
 
@@ -163,9 +177,16 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 selectedFragment = new FriendsFragment();
             } else if (itemId == R.id.message) {
                 selectedFragment = ConversationFragment.newInstance(uid, token); // Truyền userId và token
-            } else if (itemId == R.id.notification) {
+            }else if (itemId == R.id.notification) {
                 selectedFragment = new NotificationFragment();
+
+                // Reset count và ẩn badge
+                notificationUnreadCount = 0;
+                if (notificationBadge != null) {
+                    notificationBadge.setVisible(false);
+                }
             }
+
 
             if (selectedFragment != null) {
                 replaceFragment(selectedFragment);
@@ -232,6 +253,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 .load(user.getProfilePicURL())
                 .placeholder(R.drawable.default_avatar)
                 .into(avatarImage);
+
+        connectWebSocket(user);
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -308,5 +331,49 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         if (unreadCountReceiver != null) {
             unregisterReceiver(unreadCountReceiver);
         }
+        if (stompClient != null) {
+            stompClient.disconnect();
+        }
     }
+
+    private RawWebSocketManager rawWebSocketManager; // khai báo biến instance
+
+    private void connectWebSocket(User user) {
+        if (rawWebSocketManager != null) {
+            return; // Đã kết nối rồi, không kết nối lại
+        }
+
+        String url = "ws://localhost:9001/ws/websocket";
+        String topic = "/topic/notifications/" + user.getUsername();
+
+        rawWebSocketManager = new RawWebSocketManager(url);
+        rawWebSocketManager.setListener(message -> {
+            Log.d("RawWebSocket", "Received raw message: " + message);
+            runOnUiThread(() -> {
+                notificationUnreadCount++;
+                updateNotificationBadge(notificationUnreadCount);
+            });
+        });
+
+        rawWebSocketManager.connect(() -> {
+            rawWebSocketManager.subscribe(topic);
+        });
+    }
+
+
+
+
+
+    private void updateNotificationBadge(int count) {
+        if (notificationBadge == null) {
+            notificationBadge = binding.bottomNavigationView.getOrCreateBadge(R.id.notification);
+        }
+        notificationBadge.setVisible(true);
+        notificationBadge.setNumber(count);
+    }
+
+
+
+
+
 }

@@ -1,11 +1,13 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="12dp"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Avatar + Nội dung + Nút trái tim -->
+    <!-- Layout chứa comment -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,14 +16,14 @@
         <!-- Avatar -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imgAvatar"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:layout_marginEnd="8dp"
+            android:scaleType="centerCrop"
             android:src="@drawable/main_logo"
-            app:shapeAppearanceOverlay="@style/roundedImageView"
-            android:scaleType="centerCrop" />
+            app:shapeAppearanceOverlay="@style/roundedImageView" />
 
-        <!-- Nội dung (Tên + ngày + comment + reply) -->
+        <!-- Nội dung -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -31,61 +33,84 @@
             <!-- Tên -->
             <TextView
                 android:id="@+id/tvFullName"
-                android:textStyle="bold"
-                android:fontFamily="@font/lobster"
-                android:textSize="14sp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/lobster"
+                android:text="Luan Vip"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <!-- Ngày đăng -->
             <TextView
                 android:id="@+id/tvCommentDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/lobster"
                 android:text="1 giờ trước"
                 android:textColor="#888888"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"
-                android:fontFamily="sans-serif-light" />
+                android:textSize="12sp" />
 
             <!-- Nội dung bình luận -->
             <TextView
                 android:id="@+id/tvCommentContent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif-condensed"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="4dp"
+                android:fontFamily="@font/lobster"
+                android:text="Đây là một bình luận"
+                android:textSize="14sp" />
 
             <!-- Nút reply -->
-            <TextView
-                android:id="@+id/tvLoadReply"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/adlam_display"
-                android:paddingTop="5dp"
-                android:text="reply"
-                android:textColor="#A49F9F"
-                android:textStyle="italic" />
+                android:orientation="horizontal"
+                android:paddingTop="5dp">
+
+                <TextView
+                    android:id="@+id/tvLoadReply"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/adlam_display"
+                    android:text="show replies"
+                    android:textColor="#A49F9F"
+                    android:textStyle="italic" />
+
+                <TextView
+                    android:layout_width="10dp"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/tvReply"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/adlam_display"
+                    android:text="reply"
+                    android:textColor="#A49F9F"
+                    android:textStyle="italic" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Nút Like -->
+        <!-- Like button -->
         <ImageView
             android:id="@+id/btnLikeComment"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_marginStart="8dp"
             android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
             android:src="@drawable/ic_heart_outline"
-            app:tint="@color/red"
-            android:contentDescription="Like comment" />
+            app:tint="@color/red" />
     </LinearLayout>
 
-    <!-- Danh sách reply comment -->
+    <!-- RecyclerView hiển thị reply -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerReply"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:nestedScrollingEnabled="false"
-        android:layout_marginTop="8dp" />
+        tools:listitem="@layout/item_reply_comment" />
+
+
 </LinearLayout>
