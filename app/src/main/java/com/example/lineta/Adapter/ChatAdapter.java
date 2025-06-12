@@ -7,7 +7,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.example.lineta.Entity.Conversation.Message;
 import com.example.lineta.Entity.Conversation.Timestamp;
@@ -36,6 +39,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         public TextView timestamp;
         public LinearLayout messageContainer;
         public LinearLayout messageContentContainer;
+        public LinearLayout imageContainer; // Thay vì ImageView đơn lẻ
 
         public ChatViewHolder(View view) {
             super(view);
@@ -45,9 +49,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             timestamp = view.findViewById(R.id.timestamp);
             messageContainer = view.findViewById(R.id.message_container);
             messageContentContainer = view.findViewById(R.id.message_content_container);
+            imageContainer = view.findViewById(R.id.image_container);
         }
     }
 
+    @NonNull
     @Override
     public ChatViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
@@ -85,8 +91,34 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             holder.messageContentContainer.setBackgroundResource(R.drawable.message_background_light_blue);
         }
 
-        holder.messageContent.setText(message.getContext());
+        // Xử lý text
+        if (message.hasText()) {
+            holder.messageContent.setVisibility(View.VISIBLE);
+            holder.messageContent.setText(message.getContext());
+        } else {
+            holder.messageContent.setVisibility(View.GONE);
+        }
 
+        // Xử lý nhiều ảnh
+        holder.imageContainer.removeAllViews(); // Xóa các ảnh cũ
+        if (message.hasMedia()) {
+            for (String mediaUrl : message.getMedia()) {
+                ImageView imageView = new ImageView(holder.itemView.getContext());
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        200, 200); // Kích thước cố định cho mỗi ảnh
+                params.setMargins(8, 0, 8, 0); // Khoảng cách giữa các ảnh
+                imageView.setLayoutParams(params);
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                Glide.with(holder.itemView.getContext())
+                        .load(mediaUrl)
+                        .placeholder(R.drawable.ic_image_placeholder)
+                        .error(R.drawable.ic_image_error)
+                        .into(imageView);
+                holder.imageContainer.addView(imageView);
+            }
+        }
+
+        // Xử lý timestamp
         Timestamp timestamp = message.getTimestamp();
         if (timestamp != null) {
             holder.timestamp.setText(timestamp.toRelativeTime());
@@ -97,6 +129,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     @Override
     public int getItemCount() {
-        return messages.size();
+        return messages != null ? messages.size() : 0;
+    }
+
+    public void updateMessages(List<Message> newMessages) {
+        this.messages = newMessages;
+        notifyDataSetChanged();
     }
 }
