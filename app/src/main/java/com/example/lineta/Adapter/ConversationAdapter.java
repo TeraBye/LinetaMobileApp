@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -67,6 +68,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
         String contactAvatarUrl = getContactAvatarUrl(conversation);
         Long lastUpdate = (Long) conversation.get("lastUpdate");
 
+        // Lấy font từ tài nguyên
+        Typeface lobsterFont = ResourcesCompat.getFont(context, R.font.lobster);
+
         // Thiết lập tên liên hệ
         holder.contactName.setText(contactName);
 
@@ -79,18 +83,18 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
         if (unread > 0) {
             holder.unreadCount.setText(String.valueOf(unread));
             holder.unreadCount.setVisibility(View.VISIBLE);
+            // Tô đậm với font tùy chỉnh
+            holder.contactName.setTypeface(Typeface.create(lobsterFont, Typeface.BOLD));
+            holder.lastMessage.setTypeface(Typeface.create(lobsterFont, Typeface.BOLD));
         } else {
             holder.unreadCount.setVisibility(View.GONE);
+            // Không tô đậm với font tùy chỉnh
+            holder.contactName.setTypeface(Typeface.create(lobsterFont, Typeface.NORMAL));
+            holder.lastMessage.setTypeface(Typeface.create(lobsterFont, Typeface.NORMAL));
         }
 
-        // Tô đậm tên và lastMessage nếu có tin nhắn chưa đọc
-        if (unread > 0) {
-            holder.contactName.setTypeface(null, Typeface.BOLD);
-            holder.lastMessage.setTypeface(null, Typeface.BOLD);
-        } else {
-            holder.contactName.setTypeface(null, Typeface.NORMAL);
-            holder.lastMessage.setTypeface(null, Typeface.NORMAL);
-        }
+        // Thiết lập font cho lastUpdate
+        holder.lastUpdate.setTypeface(lobsterFont); // Giữ font lobster cho lastUpdate
 
         // Hiển thị lastUpdate với định dạng thời gian
         if (lastUpdate != null) {
@@ -104,7 +108,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
         if (contactAvatarUrl != null) {
             Glide.with(context).load(contactAvatarUrl).into(holder.contactAvatar);
         } else {
-            holder.contactAvatar.setImageResource(R.drawable.default_avatar); // Cần thêm default_avatar
+            holder.contactAvatar.setImageResource(R.drawable.default_avatar);
         }
 
         // Xử lý click
