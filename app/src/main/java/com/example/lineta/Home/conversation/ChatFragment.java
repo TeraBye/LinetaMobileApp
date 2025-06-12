@@ -202,6 +202,10 @@ public class ChatFragment extends Fragment {
                         messages.addAll(response.body());
                         chatAdapter.notifyDataSetChanged();
                         recyclerViewChat.scrollToPosition(messages.size() - 1);
+                        // Log để debug
+                        for (Message msg : messages) {
+                            Log.d("ChatFragment", "Message: context=" + msg.getContext() + ", media=" + msg.getMedia());
+                        }
                     } else {
                         Log.e("ChatFragment", "Không tải được tin nhắn: " + response.code());
                     }
@@ -262,7 +266,6 @@ public class ChatFragment extends Fragment {
         }
     }
 
-    // Helper method
     private RequestBody toRequestBody(String value) {
         return RequestBody.create(MediaType.parse("text/plain"), value);
     }

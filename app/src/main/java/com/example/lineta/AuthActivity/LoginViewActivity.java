@@ -147,6 +147,26 @@ public class LoginViewActivity extends AppCompatActivity {
         btnLoginEnter.setOnClickListener(v -> {
             String email = edtEmail.getText().toString().trim();
             String password = edtPassword.getText().toString().trim();
+
+            // Xóa lỗi trước khi kiểm tra
+            edtEmail.setError(null);
+            edtPassword.setError(null);
+
+            // Kiểm tra từng field
+            boolean hasError = false;
+            if (email.isEmpty()) {
+                edtEmail.setError("Email is required");
+                hasError = true;
+            }
+            if (password.isEmpty()) {
+                edtPassword.setError("Password is required");
+                hasError = true;
+            }
+
+            // Nếu có lỗi, dừng lại
+            if (hasError) {
+                return;
+            }
             // Hiển thị ProgressBar và vô hiệu hóa nút đăng nhập
             Log.d("LoginViewActivity", "Showing ProgressBar");
             dimBackground.setVisibility(View.VISIBLE);
