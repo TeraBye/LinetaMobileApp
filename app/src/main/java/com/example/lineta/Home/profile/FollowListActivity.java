@@ -6,8 +6,11 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -101,6 +104,11 @@ public class FollowListActivity extends AppCompatActivity {
                 tabTextView.setText(tab.getText());
                 tabTextView.setTypeface(typeface);
                 tabTextView.setTextColor(getResources().getColor(R.color.black, getTheme()));
+                // Căn giữa TextView trong tab
+                tabTextView.setGravity(Gravity.CENTER); // Sử dụng Gravity.CENTER thay vì View.TEXT_ALIGNMENT_CENTER
+                tabTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT));
                 tab.setCustomView(tabTextView);
 
                 // Kiểm tra và set màu cho tab được chọn mặc định

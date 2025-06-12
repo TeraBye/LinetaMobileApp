@@ -52,7 +52,7 @@ public class AccountFragment extends Fragment {
     private static final String ARG_USER_ID = "user_id";
     RecyclerView recyclerView;
     SettingAdapter adapter;
-    TextView tvUsername, tvFullname, tvPostNum, tvFollowerNum, tvFollowingNum;
+    TextView tvUsername, tvFullname, tvPostNum, tvFollowerNum, tvFollowingNum, tvBio;
     ShapeableImageView avatar;
     UserViewModel userViewModel;
     CurrentUserViewModel currentUserViewModel;
@@ -107,6 +107,7 @@ public class AccountFragment extends Fragment {
         tvPostNum = view.findViewById(R.id.tvPostNum);
         tvFollowerNum = view.findViewById(R.id.tvFollowerNum);
         tvFollowingNum = view.findViewById(R.id.tvFollowingNum);
+        tvBio = view.findViewById(R.id.tvBio);
         avatar = view.findViewById(R.id.avatar);
 
         btnFollowLayout = view.findViewById(R.id.btnFollowLayout);
@@ -137,6 +138,7 @@ public class AccountFragment extends Fragment {
             userViewModel.getUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());
                 tvFullname.setText(user.getFullName());
+                tvBio.setText(user.getBio());
                 tvPostNum.setText(String.valueOf(user.getPostNum()));
                 tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
                 tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
@@ -163,6 +165,7 @@ public class AccountFragment extends Fragment {
             currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());
                 tvFullname.setText(user.getFullName());
+                tvBio.setText(user.getBio());
                 tvPostNum.setText(String.valueOf(user.getPostNum()));
                 tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
                 tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
