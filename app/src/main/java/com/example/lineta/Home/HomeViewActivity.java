@@ -102,10 +102,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-
-
-        //getSupportActionBar().hide(); // Ẩn tên App mặc định
-
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_drawer);
         navigationView.setNavigationItemSelectedListener(this);
@@ -118,7 +114,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         if (savedInstanceState == null) {
             replaceFragment(new HomeFragment());
         }
-
 
         binding.bottomNavigationView.setBackground(null);
 
@@ -150,8 +145,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             if (isShowingProfile) {
                 isShowingProfile = false; // Cho phép thay đổi fragment sau lần đầu
-                return false; // Ngăn bottom naviga
-                // tion ghi đè ngay lập tức
+                return false; // Ngăn bottom navigation ghi đè ngay lập tức
             }
 
             Fragment selectedFragment = null;
@@ -177,7 +171,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         currentUserViewModel = new ViewModelProvider(this).get(CurrentUserViewModel.class);
 
-//        Update sidebar user infoS
+        // Update sidebar user info
         currentUserViewModel.fetchCurrentUserInfo();
         currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
             if (user != null) {
@@ -200,16 +194,12 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 Log.e("HomeViewActivity", "userId bị null");
             }
         } else {
-//            userViewModel.fetchUserInfo(); // Fetch current user's info
-
             if (savedInstanceState == null) {
                 replaceFragment(new HomeFragment());
             }
         }
 
-//        Follower/following
-
-
+        // Follower/following
 
         // Cập nhật badge ban đầu
         MenuItem messageItem = binding.bottomNavigationView.getMenu().findItem(R.id.message);
@@ -217,6 +207,32 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             badge = binding.bottomNavigationView.getOrCreateBadge(R.id.message);
             badge.setVisible(false);
         }
+    }
+
+    // Thêm phương thức gửi broadcast khi WebSocket kết nối
+    private void sendInitialUnreadBroadcast(long initialUnread) {
+        Intent intent = new Intent("com.example.lineta.UNREAD_COUNT_UPDATE").setPackage(getPackageName());
+        intent.putExtra("totalUnread", initialUnread);
+        sendBroadcast(intent);
+        Log.d(TAG, "Broadcasted initial totalUnread: " + initialUnread);
+    }
+
+    // Thêm phương thức để đồng bộ lại unreadCount từ WebSocketService
+    private void syncUnreadCount() {
+        if (webSocketService != null && isServiceBound) {
+            long syncedUnreadCount = webSocketService.getTotalUnreadCount();
+            Intent intent = new Intent("com.example.lineta.UNREAD_COUNT_UPDATE").setPackage(getPackageName());
+            intent.putExtra("totalUnread", syncedUnreadCount);
+            sendBroadcast(intent);
+            Log.d(TAG, "Synced unread count: " + syncedUnreadCount);
+        }
+    }
+
+    // Thêm phương thức gọi sync khi resume activity
+    @Override
+    protected void onResume() {
+        super.onResume();
+        syncUnreadCount(); // Đồng bộ lại unreadCount khi activity resume
     }
 
     private void updateHeader(User user) {
@@ -289,6 +305,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             if (webSocketService != null) {
                 long initialUnread = webSocketService.getTotalUnreadCount(); // Giả định có phương thức này
                 updateUnreadBadge(initialUnread);
+                sendInitialUnreadBroadcast(initialUnread); // Gửi broadcast ban đầu
             }
         }
 
