@@ -124,8 +124,10 @@ public class AccountFragment extends Fragment {
         String currentUserId = FirebaseAuth.getInstance().getUid();
         if (userId == null || userId.equals(currentUserId)) {
             btnFollowLayout.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
         } else {
             btnFollowLayout.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
             checkFollowStatus(currentUserId, userId);
             setupFollowButtonListener(currentUserId, userId);
         }

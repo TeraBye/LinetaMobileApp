@@ -8,4 +8,8 @@
     </style>
 
     <style name="Theme.Lineta" parent="Base.Theme.Lineta" />
+
+    <style name="ToolbarTitleText" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:fontFamily">@font/agbalumo</item>
+    </style>
 </resources>
