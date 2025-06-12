@@ -62,12 +62,17 @@ public class HomeFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
-        currentUserViewModel.fetchCurrentUserInfo();
+        if (currentUserViewModel.getCurrentUserLiveData().getValue() == null) {
+            currentUserViewModel.fetchCurrentUserInfo();}
 
         currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
             if (user == null) return;
-            adapter = new PostAdapter(requireContext(), list, user);
-            recyclerView.setAdapter(adapter);
+            if (adapter == null) {
+                adapter = new PostAdapter(requireContext(), list, user);
+                recyclerView.setAdapter(adapter);
+            } else {
+                adapter.setCurrentUser(user); // ← bạn cần viết thêm setter nếu chưa có
+            }
 
 
         });

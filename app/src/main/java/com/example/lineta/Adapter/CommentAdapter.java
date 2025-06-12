@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.example.lineta.Entity.Comment;
 import com.example.lineta.Entity.CommentLike;
 import com.example.lineta.Entity.Like;
+import com.example.lineta.Entity.Post;
 import com.example.lineta.Entity.ReplyComment;
 import com.example.lineta.Entity.User;
 import com.example.lineta.R;
@@ -38,6 +39,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.lineta.config.WebSocketManager;
 import com.example.lineta.dto.response.ApiResponse;
 import com.example.lineta.service.ApiService;
 import com.example.lineta.service.CommentApi;
@@ -176,6 +178,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                 if (loadedRepliesMap.containsKey(commentId)) {
                     // Nếu đã load rồi, chỉ hiển thị
                     notifyItemChanged(position);
+
                 } else {
                     // Gọi API để load reply
                     loadReplyComments(commentId, holder, position);
@@ -243,6 +246,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             }
         });
     }
+
+
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvFullName, tvContent, tvLoadReply, tvCommentDate, tvReply;
