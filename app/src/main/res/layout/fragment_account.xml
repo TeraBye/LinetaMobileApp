@@ -51,6 +51,19 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/lobster"
                 android:gravity="center"
+                android:textStyle="bold"
+                android:text="Loading"
+                android:textColor="#DD050505"
+                android:textSize="14dp"
+                android:layout_marginBottom="4dp"
+                />
+
+            <TextView
+                android:id="@+id/tvBio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/lobster"
+                android:gravity="center"
                 android:text="Loading"
                 android:textColor="#9C0D0D0D"
                 android:textSize="14dp" />
