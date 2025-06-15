@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -20,6 +21,7 @@ import com.example.lineta.Entity.Like;
 import com.example.lineta.Entity.Post;
 import com.example.lineta.Entity.User;
 import com.example.lineta.Home.interaction.CommentBottomSheetFragment;
+import com.example.lineta.Home.profile.AccountFragment;
 import com.example.lineta.R;
 import com.example.lineta.dto.response.ApiResponse;
 import com.example.lineta.service.ApiService;
@@ -187,9 +189,33 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             holder.btnMore.setVisibility(View.GONE);
         }
 
+        // CLick avatar
+//        holder.avatar.setOnClickListener(v -> {
+//            Log.d("PostAdapter", "UserId of post " + post.getUserId());
+//            openProfile(post.getUserId()); // hoặc post.getUsername() tuỳ bạn
+//        });
+//
+//        holder.tvUsername.setOnClickListener(v -> {
+//            openProfile(post.getUserId()); // hoặc post.getUsername() tuỳ bạn
+//        });
+
 
 
     }
+
+    private void openProfile(String userId) {
+        if (context instanceof FragmentActivity) {
+            FragmentActivity activity = (FragmentActivity) context;
+            FragmentTransaction transaction = activity.getSupportFragmentManager().beginTransaction();
+            AccountFragment accountFragment = AccountFragment.newInstance(userId);
+            transaction.replace(R.id.frame_layout, accountFragment);  // frame_layout là ID container chính của bạn
+            transaction.addToBackStack(null);
+            transaction.commit();
+        } else {
+            Toast.makeText(context, "Cannot open profile", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     private void showOptionsMenu(ViewHolder holder, Post post, int position) {
         androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(context, holder.btnMore);

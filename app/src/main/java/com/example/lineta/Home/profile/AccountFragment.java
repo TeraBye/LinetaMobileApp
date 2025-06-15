@@ -97,8 +97,24 @@ public class AccountFragment extends Fragment {
                         .replace(R.id.frame_layout, changePasswordFragment)
                         .addToBackStack(null)
                         .commit();
+            } else if ("Profile Settings".equals(setting)) {
+                Fragment editProfileFragment = new EditProfileFragment();
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.frame_layout, editProfileFragment)
+                        .addToBackStack(null)
+                        .commit();
             }
         });
+//                requireActivity().getSupportFragmentManager()
+//                        .beginTransaction()
+//                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+//                        .replace(R.id.frame_layout, changePasswordFragment)
+//                        .addToBackStack(null)
+//                        .commit();
+//            }
+//        });
         recyclerView.setAdapter(adapter);
 
         // Ánh xạ
@@ -131,6 +147,7 @@ public class AccountFragment extends Fragment {
         }
 
         if (userId != null) { // Get other user
+            recyclerView.setVisibility(View.GONE);
             userViewModel.fetchUserInfo(userId);
             userViewModel.getUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());
@@ -171,6 +188,7 @@ public class AccountFragment extends Fragment {
 
 
         } else { // get current user
+            recyclerView.setVisibility(View.VISIBLE);
             currentUserViewModel.fetchCurrentUserInfo();
             currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());

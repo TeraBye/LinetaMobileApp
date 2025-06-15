@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+import androidx.appcompat.widget.Toolbar;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,6 +46,8 @@ public class UserPostListActivity extends AppCompatActivity {
 
     private ApiService apiService;
     private View loadingOverlay;
+    private Toolbar toolbar;
+
     private String username; // bạn truyền từ intent sang
     private String userId;
 
@@ -52,51 +55,23 @@ public class UserPostListActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_post_list);
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         recyclerView = findViewById(R.id.recyclerViewPosts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Lấy username từ Intent
-//        User user = (User) getIntent().getSerializableExtra("user");
-//        userId = getIntent().getStringExtra("user_id");
         username = getIntent().getStringExtra("username");
+        getSupportActionBar().setTitle("Posts " + username);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-//        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+// Xử lý click back trên toolbar
+        toolbar.setNavigationOnClickListener(v -> {
+            finish();
+        });
+
         currentUserViewModel = new ViewModelProvider(this).get(CurrentUserViewModel.class);
-
-//        if(userId!=null){
-//            userViewModel.fetchUserInfo(userId);
-//            userViewModel.getUserLiveData().observe(this, user -> {
-//
-//                Log.d("User1", "user1" +  user);
-//                if (user == null) return;
-//                postList = new ArrayList<>();
-//                postAdapter = new PostAdapter(this, postList, user);
-//                recyclerView.setAdapter(postAdapter);
-//                Log.d("UserPostListActivity", "Username received: " + username);
-//                if (username != null) {
-//                    fetchPostsByUsername(username, 0);
-//                } else {
-//                    Toast.makeText(this, "Không có username", Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//        }
-//        else{
-//            currentUserViewModel.fetchCurrentUserInfo();
-//            currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
-//                Log.d("User1", "user1" +  user);
-//                if (user == null) return;
-//                postList = new ArrayList<>();
-//                postAdapter = new PostAdapter(this, postList, user);
-//                recyclerView.setAdapter(postAdapter);
-//                Log.d("UserPostListActivity", "Username received: " + username);
-//                if (username != null) {
-//                    fetchPostsByUsername(username, 0);
-//                } else {
-//                    Toast.makeText(this, "Không có username", Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//        }
 
         currentUserViewModel.fetchCurrentUserInfo();
         currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
@@ -112,27 +87,6 @@ public class UserPostListActivity extends AppCompatActivity {
                 Toast.makeText(this, "Không có username", Toast.LENGTH_SHORT).show();
             }
         });
-//        currentUserViewModel.getCurrentUserLiveData().observe(this, user1 -> {
-//            Log.d("User1", "user1" +  user1);
-//            if (user1 == null) return;
-//            postList = new ArrayList<>();
-//            postAdapter = new PostAdapter(this, postList, user1);
-//            recyclerView.setAdapter(postAdapter);
-//            Log.d("UserPostListActivity", "Username received: " + username);
-//            if (username != null) {
-//                fetchPostsByUsername(username, 0);
-//            } else {
-//                Toast.makeText(this, "Không có username", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-
-//        postList = new ArrayList<>();
-//        postAdapter = new PostAdapter(this, postList, user1);
-//        recyclerView.setAdapter(postAdapter);
-
-//        apiService = ApiClient.getClient().create(ApiService.class);
-
-
 
     }
 

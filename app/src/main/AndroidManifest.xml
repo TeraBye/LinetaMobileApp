@@ -20,6 +20,9 @@
         android:theme="@style/Base.Theme.Lineta"
         tools:targetApi="31">
         <activity
+            android:name=".EditProfileFragment"
+            android:exported="false" />
+        <activity
             android:name=".Home.profile.UserPostListActivity"
             android:exported="false" />
         <activity
