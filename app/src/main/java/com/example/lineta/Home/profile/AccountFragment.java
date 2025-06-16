@@ -97,8 +97,24 @@ public class AccountFragment extends Fragment {
                         .replace(R.id.frame_layout, changePasswordFragment)
                         .addToBackStack(null)
                         .commit();
+            } else if ("Profile Settings".equals(setting)) {
+                Fragment editProfileFragment = new EditProfileFragment();
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .replace(R.id.frame_layout, editProfileFragment)
+                        .addToBackStack(null)
+                        .commit();
             }
         });
+//                requireActivity().getSupportFragmentManager()
+//                        .beginTransaction()
+//                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+//                        .replace(R.id.frame_layout, changePasswordFragment)
+//                        .addToBackStack(null)
+//                        .commit();
+//            }
+//        });
         recyclerView.setAdapter(adapter);
 
         // Ánh xạ
@@ -134,6 +150,7 @@ public class AccountFragment extends Fragment {
         }
 
         if (userId != null) { // Get other user
+//            recyclerView.setVisibility(View.GONE);
             userViewModel.fetchUserInfo(userId);
             userViewModel.getUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());
@@ -143,14 +160,28 @@ public class AccountFragment extends Fragment {
                 tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
                 tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
 
+
+
                 if (user.getProfilePicURL() != null) {
                     Glide.with(requireContext())
                             .load(user.getProfilePicURL())
                             .placeholder(R.drawable.default_avatar)
                             .into(avatar);
                 }
+
+                tvPostNum.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(), UserPostListActivity.class);
+//                    intent.putExtra("user_id", userId);
+//                    intent.putExtra("user", user);
+                    intent.putExtra("username", user.getUsername());
+                    startActivity(intent);
+                });
+                userViewModel.fetchPostsByUser(user.getUsername(), 0, 50);
             });
 
+            userViewModel.getPostCountLiveData().observe(getViewLifecycleOwner(), count -> {
+                tvPostNum.setText(String.valueOf(count));
+            });
             // Observe errors
             userViewModel.getErrorLiveData().observe(getViewLifecycleOwner(), error -> {
 //            loadingProgressBar.setVisibility(View.GONE);
@@ -161,6 +192,7 @@ public class AccountFragment extends Fragment {
 
 
         } else { // get current user
+            recyclerView.setVisibility(View.VISIBLE);
             currentUserViewModel.fetchCurrentUserInfo();
             currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());
@@ -176,6 +208,18 @@ public class AccountFragment extends Fragment {
                             .placeholder(R.drawable.default_avatar)
                             .into(avatar);
                 }
+
+                tvPostNum.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(), UserPostListActivity.class);
+//                    intent.putExtra("user_id", userId);
+//                    intent.putExtra("user", user);
+                    intent.putExtra("username", user.getUsername());
+                    startActivity(intent);
+                });
+                currentUserViewModel.fetchPostsByUser(user.getUsername(), 0, 50);
+            });
+            currentUserViewModel.getPostCountLiveData().observe(getViewLifecycleOwner(), count -> {
+                tvPostNum.setText(String.valueOf(count));
             });
 
             // Observe errors
@@ -187,7 +231,6 @@ public class AccountFragment extends Fragment {
             });
 
         }
-
         return view;
 
     }
