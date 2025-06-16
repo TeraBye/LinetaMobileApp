@@ -309,7 +309,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         ImageView avatarImage = headerView.findViewById(R.id.avatar);
         TextView usernameText = headerView.findViewById(R.id.tvUsernameHeader);
 
-        usernameText.setText(user.getUsername());
+        usernameText.setText(user.getFullName());
 
         Glide.with(this)
                 .load(user.getProfilePicURL())

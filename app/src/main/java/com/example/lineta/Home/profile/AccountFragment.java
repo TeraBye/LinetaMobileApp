@@ -150,7 +150,7 @@ public class AccountFragment extends Fragment {
         }
 
         if (userId != null) { // Get other user
-            recyclerView.setVisibility(View.GONE);
+//            recyclerView.setVisibility(View.GONE);
             userViewModel.fetchUserInfo(userId);
             userViewModel.getUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());

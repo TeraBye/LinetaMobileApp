@@ -13,6 +13,7 @@ import retrofit2.http.Multipart;
 import retrofit2.http.PUT;
 import retrofit2.http.Part;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface UserService {
     @GET("api/auth/users/req")
@@ -29,5 +30,8 @@ public interface UserService {
             @Part("bio") RequestBody bio,
             @Part MultipartBody.Part file
     );
+
+    @GET("api/auth/users/uid")
+    Call<ApiResponse<String>> getUidByUsername(@Query("username") String username);
 
 }

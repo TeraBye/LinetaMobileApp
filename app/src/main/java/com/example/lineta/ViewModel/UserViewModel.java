@@ -25,6 +25,7 @@ public class UserViewModel extends ViewModel {
     private MutableLiveData<String> errorLiveData = new MutableLiveData<>();
     private final MutableLiveData<List<Post>> postsLiveData = new MutableLiveData<>();
     private final MutableLiveData<Integer> postCountLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> uidLiveData = new MutableLiveData<>();
 
     public LiveData<List<Post>> getPostsLiveData() {
         return postsLiveData;
@@ -95,6 +96,27 @@ public class UserViewModel extends ViewModel {
         });
     }
 
+    public void fetchUidByUsername(String username) {
+        if (isFetching) return; // Tránh gọi API nhiều lần
+        isFetching = true;
+
+        UserService userService = ApiClient.getRetrofit().create(UserService.class);
+        Call<ApiResponse<String>> call = userService.getUidByUsername(username);
+        call.enqueue(new Callback<ApiResponse<String>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<String>> call, Response<ApiResponse<String>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String uid = response.body().getResult();
+                    uidLiveData.setValue(uid);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<String>> call, Throwable t) {
+
+            }
+        });
+    }
 
 //    private void saveUserToCache(User user, String userId) {
 //        String cacheKey = userId != null ? "user_" + userId : "current_user";

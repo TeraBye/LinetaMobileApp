@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -23,9 +24,11 @@ import com.example.lineta.Entity.User;
 import com.example.lineta.Home.interaction.CommentBottomSheetFragment;
 import com.example.lineta.Home.profile.AccountFragment;
 import com.example.lineta.R;
+import com.example.lineta.ViewModel.UserViewModel;
 import com.example.lineta.dto.response.ApiResponse;
 import com.example.lineta.service.ApiService;
 import com.example.lineta.service.PostService;
+import com.example.lineta.service.UserService;
 import com.example.lineta.service.client.ApiClient;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
@@ -55,6 +58,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     private final HashMap<String, Boolean> expandedStates = new HashMap<>();
     private final HashMap<String, Boolean> likedStates = new HashMap<>();
 
+    private String uid;
+    public interface OnUidFetchedListener {
+        void onUidFetched(String uid);
+    }
+
     public PostAdapter(Context context, List<Post> posts, User currentUser) {
         this.context = context;
         this.posts = posts;
@@ -70,6 +78,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
+
         Post post = posts.get(position);
         String postId = post.getPostId();
 
@@ -189,19 +198,67 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             holder.btnMore.setVisibility(View.GONE);
         }
 
-        // CLick avatar
-//        holder.avatar.setOnClickListener(v -> {
-//            Log.d("PostAdapter", "UserId of post " + post.getUserId());
-//            openProfile(post.getUserId()); // hoặc post.getUsername() tuỳ bạn
-//        });
-//
-//        holder.tvUsername.setOnClickListener(v -> {
-//            openProfile(post.getUserId()); // hoặc post.getUsername() tuỳ bạn
-//        });
+//         CLick avatar
 
+
+        holder.avatar.setOnClickListener(v -> {
+//            String userId = getUidByUsername(post.getUsername());
+//            getUidByUsername(post.getUsername(), );
+
+            Log.d("PostAdapter", "Username of post " + post.getUsername());
+            getUidByUsername(post.getUsername(), uid -> {
+                if (uid != null) {
+                    // sử dụng uid tại đây
+                    openProfile(uid); // hoặc post.getUsername() tuỳ bạn
+                    Log.d("PostAdapter", "Received UID: " + uid);
+                } else {
+                    Log.e("PostAdapter", "Failed to get UID");
+                }
+            });
+
+
+        });
+
+        holder.tvUsername.setOnClickListener(v -> {
+            Log.d("PostAdapter", "Username of post " + post.getUsername());
+            getUidByUsername(post.getUsername(), uid -> {
+                if (uid != null) {
+                    // sử dụng uid tại đây
+                    openProfile(uid); // hoặc post.getUsername() tuỳ bạn
+                    Log.d("PostAdapter", "Received UID: " + uid);
+                } else {
+                    Log.e("PostAdapter", "Failed to get UID");
+                }
+            });
+        });
 
 
     }
+
+    private void getUidByUsername(String username, OnUidFetchedListener listener) {
+        UserService userService = ApiClient.getRetrofit().create(UserService.class);
+        Call<ApiResponse<String>> call = userService.getUidByUsername(username);
+        call.enqueue(new Callback<ApiResponse<String>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<String>> call, Response<ApiResponse<String>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    uid = response.body().getResult();
+                    Log.d("PostAdapter", "UserId of post (onResponse): " + uid);
+                    listener.onUidFetched(uid); // Gọi callback
+                } else {
+                    listener.onUidFetched(null);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<String>> call, Throwable t) {
+                listener.onUidFetched(null);
+            }
+        });
+    }
+
+
+
 
     private void openProfile(String userId) {
         if (context instanceof FragmentActivity) {

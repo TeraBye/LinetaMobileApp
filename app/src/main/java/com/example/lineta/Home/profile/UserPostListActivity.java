@@ -63,7 +63,7 @@ public class UserPostListActivity extends AppCompatActivity {
 
         // Lấy username từ Intent
         username = getIntent().getStringExtra("username");
-        getSupportActionBar().setTitle("Posts " + username);
+        getSupportActionBar().setTitle("Posts ");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 // Xử lý click back trên toolbar
