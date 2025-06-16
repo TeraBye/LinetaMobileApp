@@ -52,7 +52,7 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:hint="Viết bình luận..."
+            android:hint="Comment..."
             android:background="@drawable/edittext_bg"
             android:padding="10dp" />
 

@@ -1,6 +1,8 @@
 package com.example.lineta.Adapter;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,6 +58,8 @@ import retrofit2.Response;
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
     private List<Comment> commentList;
     private Context context;
+
+    private List<ReplyComment> replyList= new ArrayList<>();
 
     private final HashMap<String, Boolean> likedStates = new HashMap<>();
 
@@ -182,6 +186,51 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                 } else {
                     // Gọi API để load reply
                     loadReplyComments(commentId, holder, position);
+                    setupWebSocket(commentId, holder, position);
+
+                }
+            }
+        });
+
+        holder.tvReply.setOnClickListener(v -> {
+            if (holder.layoutReplyInput.getVisibility() == View.VISIBLE) {
+                // Đang hiển thị -> ẩn đi
+                holder.layoutReplyInput.setVisibility(View.GONE);
+            } else {
+                // Đang ẩn -> hiện lên và focus
+                holder.layoutReplyInput.setVisibility(View.VISIBLE);
+                holder.tvReplyingTo.setText("Đang phản hồi " + holder.tvFullName.getText().toString() + "...");
+                holder.inputCommentRep.requestFocus();
+
+                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(holder.inputCommentRep, InputMethodManager.SHOW_IMPLICIT);
+                }
+            }
+        });
+
+        holder.btnSendRep.setOnClickListener(v -> {
+            String replyText = holder.inputCommentRep.getText().toString().trim();
+
+            if (!replyText.isEmpty()) {
+                ReplyComment replyCommentRequest = ReplyComment.builder()
+                        .commentId(commentId)
+                        .content(replyText)
+                        .username(currentUser.getUsername())
+                        .fullName(currentUser.getFullName())
+                        .profilePicURL(currentUser.getProfilePicURL())
+                        .build();
+                sendCommentRepToApi(replyCommentRequest);
+                holder.inputCommentRep.setText("");
+
+                // Sau khi gửi -> ẩn input + xóa nội dung
+                holder.layoutReplyInput.setVisibility(View.GONE);
+                holder.inputCommentRep.setText("");
+
+                // Ẩn bàn phím
+                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.hideSoftInputFromWindow(holder.inputCommentRep.getWindowToken(), 0);
                 }
             }
         });
@@ -189,6 +238,26 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
 
 
+
+    }
+
+    private void sendCommentRepToApi(ReplyComment comment) {
+        ApiService api = ApiClient.getRetrofit().create(ApiService.class);
+        api.createCommentRep(comment).enqueue(new Callback<ApiResponse<Void>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                if (response.isSuccessful()) {
+                    Log.d("COMMENT", "Gửi bình luận thành công");
+                } else {
+                    Log.e("COMMENT", "Gửi thất bại: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                Log.e("COMMENT", "Lỗi: " + t.getMessage());
+            }
+        });
     }
 
     private void loadReplyComments(String commentId, ViewHolder holder, int position) {
@@ -197,7 +266,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             @Override
             public void onResponse(Call<ApiResponse<List<ReplyComment>>> call, Response<ApiResponse<List<ReplyComment>>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<ReplyComment> replyList = response.body().getResult();  // ✅ Lấy từ ApiResponse
+                    replyList = response.body().getResult();  // ✅ Lấy từ ApiResponse
                     loadedRepliesMap.put(commentId, replyList);
 
                     ReplyCommentAdapter replyAdapter = new ReplyCommentAdapter(replyList, context);
@@ -247,14 +316,61 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         });
     }
 
+    private WebSocketManager commentRepSocketManager;
+
+    private void setupWebSocket(String commentId, ViewHolder holder, int position) {
+        if (commentRepSocketManager != null) {
+            return; // Đã kết nối rồi
+        }
+
+        String url = "ws://localhost:9000/ws/websocket";
+        String topic = "/topic/reply/" + commentId;
+
+        commentRepSocketManager = new WebSocketManager(url);
+        commentRepSocketManager.setListener(jsonObject -> {
+            try {
+                ReplyComment reply = ReplyComment.builder()
+                        .commentId(jsonObject.getString("commentId"))
+                        .username(jsonObject.getString("username"))
+                        .content(jsonObject.getString("content"))
+                        .profilePicURL(jsonObject.getString("profilePicURL"))
+                        .fullName(jsonObject.getString("fullName"))
+                        .build();
+                // Thêm vào danh sách
+                List<ReplyComment> replies = loadedRepliesMap.getOrDefault(commentId, new ArrayList<>());
+                replies.add(reply);
+                loadedRepliesMap.put(commentId, replies);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    // cập nhật giao diện ở đây
+                    notifyItemChanged(position); // ví dụ
+                });
+
+                // Cập nhật RecyclerView
+                ((ViewHolder) holder).recyclerReply.post(() -> {
+                    ReplyCommentAdapter adapter = new ReplyCommentAdapter(replies, context);
+                    holder.recyclerReply.setLayoutManager(new LinearLayoutManager(context));
+                    holder.recyclerReply.setAdapter(adapter);
+                });
+
+            } catch (JSONException e) {
+                Log.e("WebSocket", "Error parsing reply comment: " + e.getMessage());
+            }
+        });
+
+        commentRepSocketManager.connect(() -> {
+            commentRepSocketManager.subscribe(topic);
+        });
+    }
+
+
 
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvFullName, tvContent, tvLoadReply, tvCommentDate, tvReply;
+        TextView tvFullName, tvContent, tvLoadReply, tvCommentDate, tvReply, tvReplyingTo;
         ImageView imgAvatar, btnLikeComment;
         RecyclerView recyclerReply;
 
-        EditText inputComment ;
+        EditText inputCommentRep;
         ImageView btnSend, btnSendRep;
 
         LinearLayout layoutReplyInput;
@@ -272,6 +388,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             tvCommentDate = itemView.findViewById(R.id.tvCommentDate);
             tvReply = itemView.findViewById(R.id.tvReply);
 
+            inputCommentRep = itemView.findViewById(R.id.inputCommentRep);
+            btnSendRep = itemView.findViewById(R.id.btnSendRep);
+            layoutReplyInput =  itemView.findViewById(R.id.layoutReplyInput);
+            tvReplyingTo = itemView.findViewById(R.id.tvReplyingTo);
         }
     }
 }

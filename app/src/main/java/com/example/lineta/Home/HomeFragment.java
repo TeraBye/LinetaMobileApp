@@ -134,7 +134,9 @@ public class HomeFragment extends Fragment {
                         adapter.notifyDataSetChanged();
                     }
                 } else {
-                    Toast.makeText(getContext(), "Failed to load posts!", Toast.LENGTH_SHORT).show();
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), "Failed to load posts!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 
@@ -142,8 +144,10 @@ public class HomeFragment extends Fragment {
             public void onFailure(Call<ApiResponse<List<Post>>> call, Throwable t) {
                 if (page == 1) swipeRefreshLayout.setRefreshing(false);
                 else showLoading(false);
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
 
-                Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
