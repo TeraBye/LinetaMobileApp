@@ -1,7 +1,11 @@
 package com.example.lineta.AuthActivity;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
@@ -22,11 +26,16 @@ import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
 
 import com.example.lineta.Entity.Account;
+import com.example.lineta.Entity.DeviceNoti.TokenRequest;
 import com.example.lineta.Home.HomeViewActivity;
 import com.example.lineta.R;
+import com.example.lineta.ViewModel.CurrentUserViewModel;
+import com.example.lineta.service.DeviceNotiApi;
+import com.example.lineta.service.client.ApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -56,6 +65,8 @@ public class LoginViewActivity extends AppCompatActivity {
     SharedPreferences sharedPreferences;
     boolean isPasswordVisible = false;
     List<Account> savedAccounts;
+
+    CurrentUserViewModel currentUserViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -189,6 +200,7 @@ public class LoginViewActivity extends AppCompatActivity {
                                 });
                             }
 
+
                         } else {
                             dimBackground.setVisibility(View.GONE);
                             progressBar.setVisibility(View.GONE);
@@ -302,5 +314,7 @@ public class LoginViewActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
 }

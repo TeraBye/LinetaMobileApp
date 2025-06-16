@@ -17,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,16 +38,16 @@ import com.example.lineta.Entity.User;
 import com.example.lineta.Home.conversation.ConversationFragment;
 import com.example.lineta.Home.modalPost.CreatePostBottomSheet;
 import com.example.lineta.Home.profile.AccountFragment;
-import com.example.lineta.Home.profile.FollowListActivity;
 import com.example.lineta.R;
 import com.example.lineta.Search.SearchActivity;
 import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.ViewModel.UserViewModel;
 import com.example.lineta.config.RawWebSocketManager;
-import com.example.lineta.config.WebSocketManager;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
 import com.example.lineta.dto.response.UnreadCountResponse;
 import com.example.lineta.service.ApiConversation;
+import com.example.lineta.service.DeviceNotiApi;
+import com.example.lineta.service.client.ApiClient;
 import com.example.lineta.service.client.WebSocketService;
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -56,14 +55,13 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import org.json.JSONException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import ua.naiksoftware.stomp.Stomp;
 import ua.naiksoftware.stomp.StompClient;
 
 public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -344,14 +342,44 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     }
 
     private void logout() {
+        // Lấy username đang đăng nhập (giả sử lấy từ FirebaseAuth)
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            AtomicReference<String> username = new AtomicReference<>(""); // hoặc currentUser.getEmail() nếu dùng email làm username
+            currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
+                if (user != null) {
+                    username.set(user.getUsername());
+                }
+            });
+            // Gọi API xoá token trên server
+            DeviceNotiApi apiService = ApiClient.getRetrofit().create(DeviceNotiApi.class);
+            Call<Void> call = apiService.deleteToken(username.get()); // Gửi username lên server
+
+            call.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    Log.d("FCM", "Token deleted on server");
+                }
+
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    Log.e("FCM", "Failed to delete token: " + t.getMessage());
+                }
+            });
+        }
+
+        // Sign out
         mAuth.signOut();
 
+        // Chuyển sang LoginActivity
         Intent intent = new Intent(HomeViewActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+
         Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
     }
+
 
     private void updateUnreadBadge(long totalUnread) {
         if (badge != null) {
