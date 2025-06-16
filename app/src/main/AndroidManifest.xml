@@ -33,6 +33,7 @@
             android:exported="false" />
         <activity
             android:name=".Home.HomeViewActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".AuthActivity.RegisterViewActivity"

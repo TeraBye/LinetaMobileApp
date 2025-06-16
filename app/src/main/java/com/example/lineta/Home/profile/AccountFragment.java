@@ -52,7 +52,7 @@ public class AccountFragment extends Fragment {
     private static final String ARG_USER_ID = "user_id";
     RecyclerView recyclerView;
     SettingAdapter adapter;
-    TextView tvUsername, tvFullname, tvPostNum, tvFollowerNum, tvFollowingNum;
+    TextView tvUsername, tvFullname, tvPostNum, tvFollowerNum, tvFollowingNum, tvBio;
     ShapeableImageView avatar;
     UserViewModel userViewModel;
     CurrentUserViewModel currentUserViewModel;
@@ -123,6 +123,7 @@ public class AccountFragment extends Fragment {
         tvPostNum = view.findViewById(R.id.tvPostNum);
         tvFollowerNum = view.findViewById(R.id.tvFollowerNum);
         tvFollowingNum = view.findViewById(R.id.tvFollowingNum);
+        tvBio = view.findViewById(R.id.tvBio);
         avatar = view.findViewById(R.id.avatar);
 
         btnFollowLayout = view.findViewById(R.id.btnFollowLayout);
@@ -140,8 +141,10 @@ public class AccountFragment extends Fragment {
         String currentUserId = FirebaseAuth.getInstance().getUid();
         if (userId == null || userId.equals(currentUserId)) {
             btnFollowLayout.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
         } else {
             btnFollowLayout.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
             checkFollowStatus(currentUserId, userId);
             setupFollowButtonListener(currentUserId, userId);
         }
@@ -152,6 +155,7 @@ public class AccountFragment extends Fragment {
             userViewModel.getUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());
                 tvFullname.setText(user.getFullName());
+                tvBio.setText(user.getBio());
                 tvPostNum.setText(String.valueOf(user.getPostNum()));
                 tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
                 tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
@@ -193,6 +197,7 @@ public class AccountFragment extends Fragment {
             currentUserViewModel.getCurrentUserLiveData().observe(getViewLifecycleOwner(), user -> {
                 tvUsername.setText(user.getUsername());
                 tvFullname.setText(user.getFullName());
+                tvBio.setText(user.getBio());
                 tvPostNum.setText(String.valueOf(user.getPostNum()));
                 tvFollowerNum.setText(String.valueOf(user.getFollowerNum()));
                 tvFollowingNum.setText(String.valueOf(user.getFollowingNum()));
@@ -264,6 +269,10 @@ public class AccountFragment extends Fragment {
             body.put("followedId", followedId);
 
             // Used for follow
+            /*AtomicReference được sử dụng để quản lý một tham chiếu (reference) đến một đối tượng theo cách an toàn
+            trong môi trường đa luồng (thread-safe).
+            Nó cho phép thực hiện các thao tác nguyên tử (atomic operations) như get(), set(),
+            và compareAndSet() mà không cần sử dụng synchronized.*/
             AtomicReference<String> followerFullname = new AtomicReference<>();
             AtomicReference<String> followerUsername = new AtomicReference<>();
             AtomicReference<String> followedUsername = new AtomicReference<>();

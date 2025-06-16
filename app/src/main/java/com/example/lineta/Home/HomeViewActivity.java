@@ -44,13 +44,27 @@ import com.example.lineta.R;
 import com.example.lineta.Search.SearchActivity;
 import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.ViewModel.UserViewModel;
+import com.example.lineta.config.RawWebSocketManager;
+import com.example.lineta.config.WebSocketManager;
 import com.example.lineta.databinding.ActivityHomeViewBinding;
+import com.example.lineta.dto.response.UnreadCountResponse;
+import com.example.lineta.service.ApiConversation;
 import com.example.lineta.service.client.WebSocketService;
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import org.json.JSONException;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import ua.naiksoftware.stomp.Stomp;
+import ua.naiksoftware.stomp.StompClient;
 
 public class HomeViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     FirebaseAuth mAuth;
@@ -67,6 +81,9 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     private boolean isServiceBound;
     private BroadcastReceiver unreadCountReceiver;
     private BadgeDrawable badge; // Khai báo badge làm biến instance
+    private StompClient stompClient;
+    private BadgeDrawable notificationBadge;
+    private int notificationUnreadCount = 0;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -83,6 +100,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             currentUser.getIdToken(true).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     token = task.getResult().getToken();
+                    // Fetch initial unread count and start WebSocketService
+                    fetchInitialUnreadCount();
                 } else {
                     Toast.makeText(this, "Không lấy được token", Toast.LENGTH_SHORT).show();
                 }
@@ -102,10 +121,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-
-
-        //getSupportActionBar().hide(); // Ẩn tên App mặc định
-
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_drawer);
         navigationView.setNavigationItemSelectedListener(this);
@@ -119,7 +134,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             replaceFragment(new HomeFragment());
         }
 
-
         binding.bottomNavigationView.setBackground(null);
 
         FloatingActionButton fab = findViewById(R.id.fabu); // chắc chắn trong layout của bạn có fab này
@@ -127,12 +141,6 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             CreatePostBottomSheet bottomSheet = CreatePostBottomSheet.newInstance();
             bottomSheet.show(getSupportFragmentManager(), "CreatePostBottomSheet");
         });
-
-        // Khởi động WebSocketService để nhận tổng số tin nhắn chưa đọc
-        Intent intentService = new Intent(this, WebSocketService.class);
-        intentService.putExtra("userId", uid);
-        startService(intentService);
-        bindService(intentService, serviceConnection, Context.BIND_AUTO_CREATE);
 
         // Đăng ký receiver để cập nhật tổng số tin nhắn chưa đọc
         unreadCountReceiver = new BroadcastReceiver() {
@@ -150,8 +158,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             if (isShowingProfile) {
                 isShowingProfile = false; // Cho phép thay đổi fragment sau lần đầu
-                return false; // Ngăn bottom naviga
-                // tion ghi đè ngay lập tức
+                return false; // Ngăn bottom navigation ghi đè ngay lập tức
             }
 
             Fragment selectedFragment = null;
@@ -165,6 +172,12 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 selectedFragment = ConversationFragment.newInstance(uid, token); // Truyền userId và token
             } else if (itemId == R.id.notification) {
                 selectedFragment = new NotificationFragment();
+
+                // Reset count và ẩn badge
+                notificationUnreadCount = 0;
+                if (notificationBadge != null) {
+                    notificationBadge.setVisible(false);
+                }
             }
 
             if (selectedFragment != null) {
@@ -177,7 +190,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
         currentUserViewModel = new ViewModelProvider(this).get(CurrentUserViewModel.class);
 
-//        Update sidebar user infoS
+        // Update sidebar user info
         currentUserViewModel.fetchCurrentUserInfo();
         currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
             if (user != null) {
@@ -187,29 +200,21 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
 
         // Handle intent from SearchActivity
         Intent intent = getIntent();
-
         if (intent != null && intent.getBooleanExtra("navigate_to_profile", false)) {
             String userId = intent.getStringExtra("selected_user_id");
             if (userId != null) {
                 Log.e("User Id", userId);
                 replaceFragment(AccountFragment.newInstance(userId));
-                // Gọi ViewModel nếu cần lấy dữ liệu người dùng
                 userViewModel.fetchUserInfo(userId);
                 isShowingProfile = true;
             } else {
                 Log.e("HomeViewActivity", "userId bị null");
             }
         } else {
-//            userViewModel.fetchUserInfo(); // Fetch current user's info
-
             if (savedInstanceState == null) {
                 replaceFragment(new HomeFragment());
             }
         }
-
-//        Follower/following
-
-
 
         // Cập nhật badge ban đầu
         MenuItem messageItem = binding.bottomNavigationView.getMenu().findItem(R.id.message);
@@ -217,6 +222,84 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             badge = binding.bottomNavigationView.getOrCreateBadge(R.id.message);
             badge.setVisible(false);
         }
+    }
+
+    // Thêm phương thức lấy tổng số tin nhắn chưa đọc từ API
+    private void fetchInitialUnreadCount() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://localhost:9191/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        ApiConversation apiService = retrofit.create(ApiConversation.class);
+        Call<UnreadCountResponse> call = apiService.getUnreadCount(uid);
+        call.enqueue(new Callback<UnreadCountResponse>() {
+            @Override
+            public void onResponse(Call<UnreadCountResponse> call, Response<UnreadCountResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    long initialUnreadCount = response.body().getUnreadCount();
+                    // Khởi động WebSocketService với initialUnreadCount
+                    Intent intentService = new Intent(HomeViewActivity.this, WebSocketService.class);
+                    intentService.putExtra("userId", uid);
+                    intentService.putExtra("initialUnreadCount", initialUnreadCount);
+                    startService(intentService);
+                    bindService(intentService, serviceConnection, Context.BIND_AUTO_CREATE);
+                    // Cập nhật badge và broadcast ban đầu
+                    updateUnreadBadge(initialUnreadCount);
+                    sendInitialUnreadBroadcast(initialUnreadCount);
+                    Log.d(TAG, "Fetched initial unread count: " + initialUnreadCount);
+                } else {
+                    Log.e(TAG, "Failed to fetch unread count, response code: " + response.code());
+                    // Fallback: Khởi động service với unreadCount = 0 nếu API fail
+                    Intent intentService = new Intent(HomeViewActivity.this, WebSocketService.class);
+                    intentService.putExtra("userId", uid);
+                    intentService.putExtra("initialUnreadCount", 0);
+                    startService(intentService);
+                    bindService(intentService, serviceConnection, Context.BIND_AUTO_CREATE);
+                    updateUnreadBadge(0);
+                    sendInitialUnreadBroadcast(0);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UnreadCountResponse> call, Throwable t) {
+                Log.e(TAG, "Failed to fetch unread count: " + t.getMessage());
+                // Fallback: Khởi động service với unreadCount = 0 nếu API fail
+                Intent intentService = new Intent(HomeViewActivity.this, WebSocketService.class);
+                intentService.putExtra("userId", uid);
+                intentService.putExtra("initialUnreadCount", 0);
+                startService(intentService);
+                bindService(intentService, serviceConnection, Context.BIND_AUTO_CREATE);
+                updateUnreadBadge(0);
+                sendInitialUnreadBroadcast(0);
+            }
+        });
+    }
+
+    // Thêm phương thức gửi broadcast khi WebSocket kết nối
+    private void sendInitialUnreadBroadcast(long initialUnread) {
+        Intent intent = new Intent("com.example.lineta.UNREAD_COUNT_UPDATE").setPackage(getPackageName());
+        intent.putExtra("totalUnread", initialUnread);
+        sendBroadcast(intent);
+        Log.d(TAG, "Broadcasted initial totalUnread: " + initialUnread);
+    }
+
+    // Thêm phương thức để đồng bộ lại unreadCount từ WebSocketService
+    private void syncUnreadCount() {
+        if (webSocketService != null && isServiceBound) {
+            long syncedUnreadCount = webSocketService.getTotalUnreadCount();
+            Intent intent = new Intent("com.example.lineta.UNREAD_COUNT_UPDATE").setPackage(getPackageName());
+            intent.putExtra("totalUnread", syncedUnreadCount);
+            sendBroadcast(intent);
+            Log.d(TAG, "Synced unread count: " + syncedUnreadCount);
+        }
+    }
+
+    // Thêm phương thức gọi sync khi resume activity
+    @Override
+    protected void onResume() {
+        super.onResume();
+        syncUnreadCount(); // Đồng bộ lại unreadCount khi activity resume
     }
 
     private void updateHeader(User user) {
@@ -232,6 +315,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
                 .load(user.getProfilePicURL())
                 .placeholder(R.drawable.default_avatar)
                 .into(avatarImage);
+
+        connectWebSocket(user);
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -285,11 +370,8 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
             WebSocketService.WebSocketBinder binder = (WebSocketService.WebSocketBinder) service;
             webSocketService = binder.getService();
             isServiceBound = true;
-            Log.d(TAG, "Service connected, updating initial unread count");
-            if (webSocketService != null) {
-                long initialUnread = webSocketService.getTotalUnreadCount(); // Giả định có phương thức này
-                updateUnreadBadge(initialUnread);
-            }
+            Log.d(TAG, "Service connected");
+            // Không cần lấy initialUnreadCount từ service nữa, vì đã truyền từ Activity
         }
 
         @Override
@@ -308,5 +390,40 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         if (unreadCountReceiver != null) {
             unregisterReceiver(unreadCountReceiver);
         }
+        if (stompClient != null) {
+            stompClient.disconnect();
+        }
+    }
+
+    private RawWebSocketManager rawWebSocketManager; // khai báo biến instance
+
+    private void connectWebSocket(User user) {
+        if (rawWebSocketManager != null) {
+            return; // Đã kết nối rồi, không kết nối lại
+        }
+
+        String url = "ws://localhost:9001/ws/websocket";
+        String topic = "/topic/notifications/" + user.getUsername();
+
+        rawWebSocketManager = new RawWebSocketManager(url);
+        rawWebSocketManager.setListener(message -> {
+            Log.d("RawWebSocket", "Received raw message: " + message);
+            runOnUiThread(() -> {
+                notificationUnreadCount++;
+                updateNotificationBadge(notificationUnreadCount);
+            });
+        });
+
+        rawWebSocketManager.connect(() -> {
+            rawWebSocketManager.subscribe(topic);
+        });
+    }
+
+    private void updateNotificationBadge(int count) {
+        if (notificationBadge == null) {
+            notificationBadge = binding.bottomNavigationView.getOrCreateBadge(R.id.notification);
+        }
+        notificationBadge.setVisible(true);
+        notificationBadge.setNumber(count);
     }
 }
