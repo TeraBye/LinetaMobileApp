@@ -3,8 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+// <<<<<<< thien
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+// =======
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+// >>>>>>> main
         android:maxSdkVersion="32" />
 
     <application
@@ -20,6 +25,12 @@
         android:theme="@style/Base.Theme.Lineta"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".EditProfileFragment"
+            android:exported="false" />
+        <activity
+            android:name=".Home.profile.UserPostListActivity"
+            android:exported="false" />
         <activity
             android:name=".Home.profile.FollowListActivity"
             android:exported="false" />
