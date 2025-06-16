@@ -112,5 +112,48 @@
         android:nestedScrollingEnabled="false"
         tools:listitem="@layout/item_reply_comment" />
 
+    <LinearLayout
+        android:id="@+id/layoutReplyInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginTop="8dp">
 
+        <!-- Text "Đang phản hồi user..." -->
+        <TextView
+            android:id="@+id/tvReplyingTo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đang phản hồi user1..."
+            android:textStyle="italic"
+            android:textColor="#888888"
+            android:textSize="13sp"
+            android:layout_marginBottom="4dp" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:background="#EEEEEE"
+            android:gravity="center_vertical">
+
+        <!-- Ô nhập -->
+            <EditText
+                android:id="@+id/inputCommentRep"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Reply..."
+                android:background="@drawable/edittext_bg"
+                android:padding="10dp" />
+            <ImageView
+                android:id="@+id/btnSendRep"
+                android:src="@drawable/baseline_send_24"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

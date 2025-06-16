@@ -5,6 +5,7 @@ import com.example.lineta.Entity.Comment;
 import com.example.lineta.Entity.CommentLike;
 import com.example.lineta.Entity.Like;
 import com.example.lineta.Entity.Post;
+import com.example.lineta.Entity.ReplyComment;
 import com.example.lineta.dto.response.ApiResponse;
 
 
@@ -53,5 +54,8 @@ public interface ApiService {
 
     @POST("/api/comments/createComment")
     Call<ApiResponse<Void>> createComment(@Body Comment comment);
+
+    @POST("/api/comments/reply")
+    Call<ApiResponse<Void>> createCommentRep(@Body ReplyComment replyComment);
 
 }
