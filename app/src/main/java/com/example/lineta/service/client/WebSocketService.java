@@ -24,7 +24,7 @@ import ua.naiksoftware.stomp.dto.StompMessage;
 public class WebSocketService extends Service {
 
     private static final String TAG = "WebSocketMessageService";
-    private static final String WS_URL = "ws://10.0.2.2:4000/api/message/ws"; // Sử dụng 10.0.2.2 cho emulator
+    private static final String WS_URL = "ws://localhost:4000/api/message/ws";
 
     private final IBinder binder = new WebSocketBinder();
     private StompClient stompClient;
