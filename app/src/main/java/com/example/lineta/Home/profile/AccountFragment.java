@@ -226,6 +226,10 @@ public class AccountFragment extends Fragment {
             body.put("followedId", followedId);
 
             // Used for follow
+            /*AtomicReference được sử dụng để quản lý một tham chiếu (reference) đến một đối tượng theo cách an toàn
+            trong môi trường đa luồng (thread-safe).
+            Nó cho phép thực hiện các thao tác nguyên tử (atomic operations) như get(), set(),
+            và compareAndSet() mà không cần sử dụng synchronized.*/
             AtomicReference<String> followerFullname = new AtomicReference<>();
             AtomicReference<String> followerUsername = new AtomicReference<>();
             AtomicReference<String> followedUsername = new AtomicReference<>();
