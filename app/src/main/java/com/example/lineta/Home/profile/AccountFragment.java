@@ -89,7 +89,7 @@ public class AccountFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        String[] settings = {"Profile Settings", "Change Password", "Notification Settings"};
+        String[] settings = {"Profile Settings", "Change Password"};
         adapter = new SettingAdapter(Arrays.asList(settings), setting -> {
             if ("Change Password".equals(setting)) {
                 Fragment changePasswordFragment = ChangePasswordFragment.newInstance(null, null);
