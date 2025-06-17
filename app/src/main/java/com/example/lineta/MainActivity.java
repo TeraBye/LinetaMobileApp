@@ -3,6 +3,7 @@ package com.example.lineta;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,6 +13,9 @@ import android.util.Log;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.security.crypto.EncryptedSharedPreferences;
+import androidx.security.crypto.MasterKeys;
 
 import com.example.lineta.AuthActivity.LoginActivity;
 import com.example.lineta.Entity.DeviceNoti.TokenRequest;
@@ -31,7 +35,7 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
     FirebaseAuth mAuth;
-    
+    SharedPreferences sharedPreferences;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +44,25 @@ public class MainActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        // Khởi tạo SharedPreferences
+        try {
+            String masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
+            sharedPreferences = EncryptedSharedPreferences.create(
+                    "LoginPrefs",
+                    masterKeyAlias,
+                    this,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Fallback to regular SharedPreferences if encryption fails
+            sharedPreferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
+        }
+
+        // Kiểm tra username trong SharedPreferences
+        String username = sharedPreferences.getString("username", null);
+
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -47,6 +70,21 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent;
                 if (currentUser != null) {
                     intent = new Intent(MainActivity.this, HomeViewActivity.class);
+                    // Nếu chưa có username, lấy thông tin user
+                    if (username == null) {
+                        CurrentUserViewModel viewModel = new ViewModelProvider(MainActivity.this).get(CurrentUserViewModel.class);
+                        viewModel.fetchCurrentUserInfo();
+                        viewModel.getCurrentUserLiveData().observe(MainActivity.this, user -> {
+                            if (user != null) {
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString("username", user.getUsername());
+                                editor.apply();
+                                sendTokenToServer(user.getUsername());
+                            }
+                        });
+                    } else {
+                        sendTokenToServer(username);
+                    }
                 } else {
                     intent = new Intent(MainActivity.this, LoginActivity.class);
                 }
@@ -93,29 +131,39 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-    private void sendTokenToServer(String token) {
 
-                TokenRequest tokenRequest = new TokenRequest(token, "terabye");
-                DeviceNotiApi apiService = ApiClient.getRetrofit().create(DeviceNotiApi.class);
-                Call<Void> call = apiService.sendTokenToServer(tokenRequest);
+    private void sendTokenToServer(String username) {
 
-                call.enqueue(new Callback<Void>() {
-                    @Override
-                    public void onResponse(Call<Void> call, Response<Void> response) {
-                        if (response.isSuccessful()) {
-                            Log.d("FCM", "Token sent successfully from MainActivity");
-                        } else {
-                            Log.e("FCM", "Failed to send token. Code: " + response.code());
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+                    String token = task.getResult();
+                    Log.d("FCM", "Token: " + token);
+
+                    TokenRequest tokenRequest = new TokenRequest(token, username);
+                    DeviceNotiApi apiService = ApiClient.getRetrofit().create(DeviceNotiApi.class);
+                    Call<Void> call = apiService.sendTokenToServer(tokenRequest);
+
+                    call.enqueue(new Callback<Void>() {
+                        @Override
+                        public void onResponse(Call<Void> call, Response<Void> response) {
+                            if (response.isSuccessful()) {
+                                Log.d("FCM", "Token sent successfully with username: " + username);
+                            } else {
+                                Log.e("FCM", "Failed to send token. Code: " + response.code());
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onFailure(Call<Void> call, Throwable t) {
-                        Log.e("FCM", "Error sending token: " + t.getMessage());
-                    }
+                        @Override
+                        public void onFailure(Call<Void> call, Throwable t) {
+                            Log.e("FCM", "Error sending token: " + t.getMessage());
+                        }
+                    });
                 });
-            }
-
+    }
 
 
 }
