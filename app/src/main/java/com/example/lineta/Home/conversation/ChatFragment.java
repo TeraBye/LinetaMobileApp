@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -75,6 +76,9 @@ public class ChatFragment extends Fragment {
     private WebSocketService webSocketService;
     private boolean isServiceBound;
     private String listUserString;
+    private ImageView previewImage;
+    private LinearLayout loadingContainer;
+
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -141,12 +145,18 @@ public class ChatFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
 
+
         recyclerViewChat = view.findViewById(R.id.recyclerViewChat);
+
+        loadingContainer = view.findViewById(R.id.loading_container);
+        showLoading(true);
+
         messageInput = view.findViewById(R.id.messageInput);
         contactNameTextView = view.findViewById(R.id.contactName);
         contactAvatar = view.findViewById(R.id.contactAvatar);
         attachImageButton = view.findViewById(R.id.attach_image_button);
         sendButton = view.findViewById(R.id.send_button);
+        previewImage = view.findViewById(R.id.previewImage);
 
         contactNameTextView.setText(contactName != null ? contactName : "Unknown");
         if (contactAvatarUrl != null && !contactAvatarUrl.isEmpty()) {
@@ -167,6 +177,9 @@ public class ChatFragment extends Fragment {
 
         fetchMessages();
 
+        loadingContainer = view.findViewById(R.id.loading_container);
+        showLoading(false);
+
         attachImageButton.setOnClickListener(v -> {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                 pickImageLauncher.launch("image/*");
@@ -181,8 +194,23 @@ public class ChatFragment extends Fragment {
                 sendMessage(messageText);
                 messageInput.setText("");
                 selectedImageUri = null;
+                previewImage.setVisibility(View.GONE);
             }
         });
+
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        selectedImageUri = uri;
+                        Log.d("ChatFragment", "Image selected: " + uri.toString());
+                        Glide.with(this)
+                                .load(uri)
+                                .into(previewImage);
+                        previewImage.setVisibility(View.VISIBLE);
+                    }
+                }
+        );
 
         return view;
     }
@@ -276,5 +304,10 @@ public class ChatFragment extends Fragment {
         if (isServiceBound) {
             getContext().unbindService(serviceConnection);
         }
+    }
+
+    private void showLoading(boolean show) {
+        loadingContainer.setVisibility(show ? View.VISIBLE : View.GONE);
+        recyclerViewChat.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 }

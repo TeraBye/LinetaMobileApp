@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -51,6 +52,7 @@ public class ConversationFragment extends Fragment {
 
     private String userId;
     private String token;
+    private LinearLayout loadingContainer;
 
     // Lưu trữ các cập nhật tạm thời khi fragment không active
     private Map<String, Map<String, Object>> pendingUpdates = new HashMap<>();
@@ -200,6 +202,8 @@ public class ConversationFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_conversation, container, false);
 
         recyclerViewConversations = view.findViewById(R.id.recyclerViewConversations);
+        loadingContainer = view.findViewById(R.id.loading_container);
+        showLoading(true);
 
         recyclerViewConversations.setLayoutManager(new LinearLayoutManager(getContext()));
         conversations = new ArrayList<>();
@@ -214,6 +218,7 @@ public class ConversationFragment extends Fragment {
         recyclerViewConversations.setAdapter(conversationAdapter);
 
         fetchConversations();
+        showLoading(false);
         Log.d(TAG, "View created and initial fetch triggered");
 
         return view;
@@ -450,5 +455,10 @@ public class ConversationFragment extends Fragment {
         if (isServiceBound) {
             requireContext().unbindService(serviceConnection);
         }
+    }
+
+    private void showLoading(boolean show) {
+        loadingContainer.setVisibility(show ? View.VISIBLE : View.GONE);
+        recyclerViewConversations.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 }
