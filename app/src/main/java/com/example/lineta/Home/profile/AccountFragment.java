@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.lineta.Adapter.SettingAdapter;
+import com.example.lineta.Home.conversation.MessageDialogFragment;
 import com.example.lineta.R;
 import com.example.lineta.ViewModel.CurrentUserViewModel;
 import com.example.lineta.ViewModel.UserViewModel;
@@ -45,6 +46,7 @@ import lombok.experimental.FieldDefaults;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.example.lineta.Home.conversation.MessageDialogFragment;
 
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -61,7 +63,7 @@ public class AccountFragment extends Fragment {
     FrameLayout btnFollowLayout;
     Button btnFollow;
     ProgressBar progressBarFollow;
-
+    private Button btnMessage;
 
     public static AccountFragment newInstance(String userId) {
         AccountFragment fragment = new AccountFragment();
@@ -136,6 +138,9 @@ public class AccountFragment extends Fragment {
 
         userViewModel = new ViewModelProvider(requireActivity()).get(UserViewModel.class);
         currentUserViewModel = new ViewModelProvider(requireActivity()).get(CurrentUserViewModel.class);
+
+        btnMessage = view.findViewById(R.id.btnMessage); // Khởi tạo nút Message
+        setupMessageButtonListener();
 
         // Disappear follow button for current user
         String currentUserId = FirebaseAuth.getInstance().getUid();
@@ -350,5 +355,24 @@ public class AccountFragment extends Fragment {
             intent.putExtra("user_id", userId != null ? userId : currentUserId);
             startActivity(intent);
         });
+    }
+
+    private void setupMessageButtonListener() {
+        String currentUserId = FirebaseAuth.getInstance().getUid();
+        if (userId != null && !userId.equals(currentUserId)) {
+            btnMessage.setOnClickListener(v -> {
+                // Tạo listUserString
+                String listUserString = currentUserId + "," + userId;
+                // Mở dialog
+                MessageDialogFragment dialog = MessageDialogFragment.newInstance(
+                        currentUserId,
+                        userId,
+                        listUserString
+                );
+                dialog.show(getChildFragmentManager(), "MessageDialog");
+            });
+        } else {
+            btnMessage.setVisibility(View.GONE);
+        }
     }
 }

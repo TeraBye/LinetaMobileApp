@@ -105,7 +105,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             for (String mediaUrl : message.getMedia()) {
                 ImageView imageView = new ImageView(holder.itemView.getContext());
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        200, 200); // Kích thước cố định cho mỗi ảnh
+                        400, 400); // Kích thước cố định cho mỗi ảnh
                 params.setMargins(8, 0, 8, 0); // Khoảng cách giữa các ảnh
                 imageView.setLayoutParams(params);
                 imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -115,6 +115,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                         .error(R.drawable.ic_image_error)
                         .into(imageView);
                 holder.imageContainer.addView(imageView);
+                holder.messageContentContainer.setMinimumWidth(500);
             }
         }
 
