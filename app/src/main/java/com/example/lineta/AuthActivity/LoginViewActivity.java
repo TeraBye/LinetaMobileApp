@@ -1,11 +1,7 @@
 package com.example.lineta.AuthActivity;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
@@ -22,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKeys;
 
@@ -34,14 +31,12 @@ import com.example.lineta.service.DeviceNotiApi;
 import com.example.lineta.service.client.ApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GetTokenResult;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,6 +68,9 @@ public class LoginViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login_view);
+
+        // Khởi tạo ViewModel
+        currentUserViewModel = new ViewModelProvider(this).get(CurrentUserViewModel.class);
 
         edtEmail = findViewById(R.id.edtEmail);
         edtPassword = findViewById(R.id.edtPassword);
@@ -298,9 +296,30 @@ public class LoginViewActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                     btnLoginEnter.setEnabled(true);
                     if (response.isSuccessful()) {
-                        Intent intent = new Intent(LoginViewActivity.this, HomeViewActivity.class);
-                        startActivity(intent);
-                        finish();
+                        // Gọi fetchCurrentUserInfo để lấy thông tin user
+                        currentUserViewModel.fetchCurrentUserInfo();
+                        currentUserViewModel.getCurrentUserLiveData().observe(LoginViewActivity.this, user -> {
+                            if (user != null) {
+                                // Lưu username vào SharedPreferences
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString("username", user.getUsername()); // Giả sử User có phương thức getUsername()
+                                editor.apply();
+
+                                // Lấy token FCM và gửi lên server
+                                FirebaseMessaging.getInstance().getToken()
+                                        .addOnCompleteListener(task -> {
+                                            if (task.isSuccessful()) {
+                                                String fcmToken = task.getResult();
+                                                sendTokenToServer(fcmToken, user.getUsername());
+                                            }
+                                        });
+
+                                // Chuyển sang HomeViewActivity
+                                Intent intent = new Intent(LoginViewActivity.this, HomeViewActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+                        });
                     } else {
                         String errorBody = null;
                         try {
@@ -315,6 +334,26 @@ public class LoginViewActivity extends AppCompatActivity {
         });
     }
 
+    private void sendTokenToServer(String fcmToken, String username) {
+        TokenRequest tokenRequest = new TokenRequest(fcmToken, username); // Sử dụng username thay vì hardcode
+        DeviceNotiApi apiService = ApiClient.getRetrofit().create(DeviceNotiApi.class);
+        retrofit2.Call<Void> call = apiService.sendTokenToServer(tokenRequest);
 
+        call.enqueue(new retrofit2.Callback<Void>() {
+            @Override
+            public void onResponse(retrofit2.Call<Void> call, retrofit2.Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Log.d("FCM", "Token sent successfully with username: " + username);
+                } else {
+                    Log.e("FCM", "Failed to send token. Code: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<Void> call, Throwable t) {
+                Log.e("FCM", "Error sending token: " + t.getMessage());
+            }
+        });
+    }
 
 }

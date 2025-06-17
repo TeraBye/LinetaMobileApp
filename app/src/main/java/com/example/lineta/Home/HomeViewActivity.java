@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -31,6 +32,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.security.crypto.EncryptedSharedPreferences;
+import androidx.security.crypto.MasterKeys;
 
 import com.bumptech.glide.Glide;
 import com.example.lineta.AuthActivity.LoginActivity;
@@ -82,6 +85,7 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
     private StompClient stompClient;
     private BadgeDrawable notificationBadge;
     private int notificationUnreadCount = 0;
+    private SharedPreferences sharedPreferences;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -90,6 +94,22 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         binding = ActivityHomeViewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         EdgeToEdge.enable(this); // Bắt buộc cho version Android mới
+
+        // Khởi tạo SharedPreferences
+        try {
+            String masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
+            sharedPreferences = EncryptedSharedPreferences.create(
+                    "LoginPrefs",
+                    masterKeyAlias,
+                    this,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Fallback to regular SharedPreferences if encryption fails
+            sharedPreferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
+        }
 
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -345,41 +365,59 @@ public class HomeViewActivity extends AppCompatActivity implements NavigationVie
         // Lấy username đang đăng nhập (giả sử lấy từ FirebaseAuth)
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            AtomicReference<String> username = new AtomicReference<>(""); // hoặc currentUser.getEmail() nếu dùng email làm username
-            currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
-                if (user != null) {
-                    username.set(user.getUsername());
-                }
-            });
-            // Gọi API xoá token trên server
-            DeviceNotiApi apiService = ApiClient.getRetrofit().create(DeviceNotiApi.class);
-            Call<Void> call = apiService.deleteToken(username.get()); // Gửi username lên server
-
-            call.enqueue(new Callback<Void>() {
-                @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
-                    Log.d("FCM", "Token deleted on server");
-                }
-
-                @Override
-                public void onFailure(Call<Void> call, Throwable t) {
-                    Log.e("FCM", "Failed to delete token: " + t.getMessage());
-                }
-            });
+            // Lấy username từ SharedPreferences
+            String username = sharedPreferences.getString("username", null);
+            if (username != null) {
+                deleteTokenFromServer(username, () -> {
+                    performSignOut();
+                });
+            } else {
+                // Fallback: Lấy từ ViewModel nếu cần
+                currentUserViewModel.getCurrentUserLiveData().observe(this, user -> {
+                    if (user != null) {
+                        String fallbackUsername = user.getUsername();
+                        deleteTokenFromServer(fallbackUsername, () -> {
+                            performSignOut();
+                        });
+                    }
+                });
+            }
         }
 
-        // Sign out
-        mAuth.signOut();
+    }
 
-        // Chuyển sang LoginActivity
+    private void deleteTokenFromServer(String username, Runnable onSuccess) {
+        DeviceNotiApi apiService = ApiClient.getRetrofit().create(DeviceNotiApi.class);
+        Call<Void> call = apiService.deleteToken(username); // Giả sử bạn đã thêm header
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Log.d("FCM", "Token deleted for username: " + username);
+                    onSuccess.run();
+                } else {
+                    Log.e("FCM", "Failed to delete token. Code: " + response.code() + ", Message: " + response.message());
+                    onSuccess.run(); // Tiếp tục đăng xuất ngay cả khi thất bại
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("FCM", "Failed to delete token: " + t.getMessage());
+                onSuccess.run(); // Tiếp tục đăng xuất ngay cả khi lỗi
+            }
+        });
+    }
+
+    private void performSignOut() {
+        mAuth.signOut();
         Intent intent = new Intent(HomeViewActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-
         Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
     }
-
 
     private void updateUnreadBadge(long totalUnread) {
         if (badge != null) {

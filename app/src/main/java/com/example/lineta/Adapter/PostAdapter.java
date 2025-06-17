@@ -187,14 +187,20 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             });
             holder.iconLike.setImageResource(newState ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
         });
+            Log.d("currentUsername:",currentUser.getUsername());
 
         // Kiểm tra quyền hiển thị menu (chỉ hiện khi user đăng bài chính là user hiện tại)
-        if (post.getUsername().equals(currentUser.getUsername())) {
+
+        if(post.getUsername() == null){
+            holder.btnMore.setVisibility(View.GONE);
+        }
+        else if (post.getUsername().equals(currentUser.getUsername())) {
             holder.btnMore.setVisibility(View.VISIBLE);
             holder.btnMore.setOnClickListener(v -> {
                 showOptionsMenu(holder, post, position);
             });
-        } else {
+        }
+        else {
             holder.btnMore.setVisibility(View.GONE);
         }
 
